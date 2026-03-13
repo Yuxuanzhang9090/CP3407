@@ -15,7 +15,7 @@ if ($conn->connect_error) {
 if (!isset($_POST['item_id'])) {
     echo json_encode([
         "success" => false,
-        "message" => "No item selected"
+        "message" => "Item ID missing"
     ]);
     exit;
 }
@@ -24,14 +24,31 @@ $item_id = (int)$_POST['item_id'];
 
 $sql = "SELECT id, name, price FROM menu_items WHERE id = ?";
 $stmt = $conn->prepare($sql);
+
+if (!$stmt) {
+    echo json_encode([
+        "success" => false,
+        "message" => "SQL prepare failed: " . $conn->error
+    ]);
+    exit;
+}
+
 $stmt->bind_param("i", $item_id);
-$stmt->execute();
+
+if (!$stmt->execute()) {
+    echo json_encode([
+        "success" => false,
+        "message" => "SQL execute failed: " . $stmt->error
+    ]);
+    exit;
+}
+
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     echo json_encode([
         "success" => false,
-        "message" => "Item not found"
+        "message" => "Menu item not found"
     ]);
     exit;
 }
@@ -64,6 +81,7 @@ foreach ($_SESSION['cart'] as $cart_item) {
 echo json_encode([
     "success" => true,
     "cart_count" => $cart_count,
-    "cart_total" => $cart_total
+    "cart_total" => number_format($cart_total, 1, '.', '')
 ]);
+exit;
 ?>
