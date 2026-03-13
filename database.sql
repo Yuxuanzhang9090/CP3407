@@ -67,3 +67,58 @@ INSERT INTO restaurants (category_id, name, address, rating, opening_hours) VALU
 (6, 'Domino''s Pizza Bishan', '150 Bishan Street 11, #01-135, Singapore 570150', 4.1, '10:30 AM - 11:00 PM'),
 (6, 'Little Caesars Pizza', '1 HarbourFront Walk, #B2-12 VivoCity, Singapore 098585', 4.0, '11:00 AM - 10:00 PM'),
 (6, 'Canadian Pizza', '500 Toa Payoh Lorong 6, #01-01, Singapore 310500', 4.1, '11:00 AM - 11:00 PM');
+
+CREATE TABLE menu_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    restaurant_id INT NOT NULL,
+    menu_category VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255),
+    price DECIMAL(10,2) NOT NULL,
+    image VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
+);
+
+INSERT INTO menu_items (restaurant_id, menu_category, name, description, price, image) VALUES
+(1, 'Burgers', 'Big Mac', 'Two beef patties with lettuce, cheese, pickles and special sauce', 8.50, '../images/menu/big_mac.png'),
+(1, 'Burgers', 'McChicken', 'Crispy chicken burger with lettuce and mayonnaise', 7.20, '../images/menu/mcchicken.png'),
+(1, 'Burgers', 'Filet-O-Fish', 'Fish fillet burger with tartar sauce and cheese', 7.80, '../images/menu/filet_o_fish.png'),
+(1, 'Burgers', 'Double Cheeseburger', 'Two beef patties with double cheese and pickles', 8.90, '../images/menu/double_cheeseburger.png'),
+(1, 'Burgers', 'Cheeseburger', 'Classic beef burger with cheese, pickles and ketchup', 5.90, '../images/menu/cheeseburger.png'),
+
+(1, 'Sides', 'Fries', 'Golden crispy fries', 3.50, '../images/menu/fries.png'),
+(1, 'Sides', 'Chicken McNuggets 6pc', 'Six pieces of crispy chicken nuggets', 4.90, '../images/menu/nuggets_6pc.png'),
+(1, 'Sides', 'Chicken McNuggets 9pc', 'Nine pieces of crispy chicken nuggets', 6.50, '../images/menu/nuggets_9pc.png'),
+(1, 'Sides', 'Apple Pie', 'Hot crispy apple pie dessert', 2.50, '../images/menu/apple_pie.png'),
+(1, 'Sides', 'Corn Cup', 'Sweet corn served warm', 2.80, '../images/menu/corn_cup.png'),
+
+(1, 'Drinks', 'Coca Cola', 'Chilled Coca Cola soft drink', 2.50, '../images/menu/coke.png'),
+(1, 'Drinks', 'Sprite', 'Refreshing lemon-lime soda', 2.50, '../images/menu/sprite.png'),
+(1, 'Drinks', 'Fanta', 'Orange flavoured sparkling drink', 2.50, '../images/menu/fanta.png'),
+(1, 'Drinks', 'Milo', 'Cold chocolate malt drink', 3.20, '../images/menu/milo.png'),
+(1, 'Drinks', 'Iced Lemon Tea', 'Refreshing iced lemon tea', 2.80, '../images/menu/iced_lemon_tea.png'),
+(1, 'Drinks', 'Hot Coffee', 'Freshly brewed hot coffee', 2.90, '../images/menu/hot_coffee.png'),
+
+(1, 'Desserts', 'Hot Fudge Sundae', 'Vanilla soft serve topped with hot fudge', 3.50, '../images/menu/hot_fudge_sundae.png'),
+(1, 'Desserts', 'Strawberry Sundae', 'Vanilla soft serve topped with strawberry sauce', 3.50, '../images/menu/strawberry_sundae.png'),
+(1, 'Desserts', 'Vanilla Cone', 'Classic vanilla soft serve cone', 1.50, '../images/menu/vanilla_cone.png'),
+(1, 'Desserts', 'McFlurry Oreo', 'Vanilla soft serve blended with Oreo pieces', 4.20, '../images/menu/mcflurry_oreo.png');
+
+CREATE TABLE orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    restaurant_id INT,
+    total_price DECIMAL(10,2),
+    status VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    menu_item_id INT,
+    item_name VARCHAR(100),
+    quantity INT,
+    price DECIMAL(10,2)
+);
