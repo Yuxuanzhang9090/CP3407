@@ -10,12 +10,15 @@ if ($conn->connect_error) {
 }
 
 $restaurant_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$_SESSION['restaurant_id'] = $restaurant_id;
 
 if ($restaurant_id <= 0) {
     die("Invalid restaurant ID");
 }
 
+/* Store current restaurant in session */
+$_SESSION['restaurant_id'] = $restaurant_id;
+
+/* Get restaurant details */
 $sql_restaurant = "SELECT * FROM restaurants WHERE id = ?";
 $stmt = $conn->prepare($sql_restaurant);
 $stmt->bind_param("i", $restaurant_id);
@@ -28,12 +31,14 @@ if ($result_restaurant->num_rows === 0) {
 
 $restaurant = $result_restaurant->fetch_assoc();
 
+/* Get menu items for this restaurant */
 $sql_menu = "SELECT * FROM menu_items WHERE restaurant_id = ? ORDER BY menu_category, id";
 $stmt_menu = $conn->prepare($sql_menu);
 $stmt_menu->bind_param("i", $restaurant_id);
 $stmt_menu->execute();
 $result_menu = $stmt_menu->get_result();
 
+/* Group items by category */
 $menu = [];
 while ($row = $result_menu->fetch_assoc()) {
     $menu[$row['menu_category']][] = $row;
@@ -41,6 +46,7 @@ while ($row = $result_menu->fetch_assoc()) {
 
 $categories = array_keys($menu);
 
+/* Read cart from session */
 $cart = $_SESSION['cart'] ?? [];
 $cart_count = 0;
 $cart_total = 0;
@@ -50,6 +56,7 @@ foreach ($cart as $cart_item) {
     $cart_total += $cart_item['price'] * $cart_item['quantity'];
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,21 +64,24 @@ foreach ($cart as $cart_item) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($restaurant['name']); ?> Menu</title>
 
-    <link rel="stylesheet" href="/CP3407-main/css/style.css">
+    <link rel="stylesheet" href="/CP3407-main/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 
 <div class="menu-page">
 
+    <!-- Banner -->
     <div class="menu-banner" style="background-image: url('<?php echo htmlspecialchars($restaurant['image'] ?? '../images/banner_food.jpg'); ?>');">
         <div class="menu-banner-overlay"></div>
 
-        <a href="checkout.php" class="menu-cart-icon">
+        <!-- Cart icon scrolls to cart bar -->
+        <a href="#cartBar" class="menu-cart-icon">
             <i class="fa-solid fa-cart-shopping"></i>
         </a>
     </div>
 
+    <!-- Restaurant info -->
     <div class="menu-info-card">
         <div class="menu-logo">
             <?php
@@ -80,7 +90,9 @@ foreach ($cart as $cart_item) {
             ?>
         </div>
 
-        <h1 class="menu-store-name"><?php echo htmlspecialchars($restaurant['name']); ?></h1>
+        <h1 class="menu-store-name">
+            <?php echo htmlspecialchars($restaurant['name']); ?>
+        </h1>
 
         <p class="menu-store-subtitle">
             <i class="fa-solid fa-location-dot"></i>
@@ -94,6 +106,7 @@ foreach ($cart as $cart_item) {
         </div>
     </div>
 
+    <!-- Tabs -->
     <?php if (!empty($categories)) { ?>
         <div class="menu-tabs">
             <?php foreach ($categories as $index => $category) { ?>
@@ -104,12 +117,16 @@ foreach ($cart as $cart_item) {
         </div>
     <?php } ?>
 
+    <!-- Menu sections -->
     <div class="menu-sections">
         <?php if (!empty($menu)) { ?>
             <?php foreach ($menu as $category => $items): ?>
                 <?php $catIndex = array_search($category, $categories); ?>
+
                 <div class="menu-section" id="cat-<?php echo $catIndex; ?>">
-                    <h2 class="menu-section-title"><?php echo htmlspecialchars($category); ?></h2>
+                    <h2 class="menu-section-title">
+                        <?php echo htmlspecialchars($category); ?>
+                    </h2>
 
                     <div class="menu-grid-phone">
                         <?php foreach ($items as $item): ?>
@@ -128,12 +145,10 @@ foreach ($cart as $cart_item) {
 
                                 <div class="dish-price-row">
                                     <div class="dish-price">
-                                         <?php echo number_format($item['price'], 1); ?>
+                                        <?php echo number_format($item['price'], 1); ?>
                                     </div>
 
-                                    <button class="add-cart-btn"
-                                            data-id="<?php echo $item['id']; ?>"
-                                            data-price="<?php echo $item['price']; ?>">
+                                    <button class="add-cart-btn" data-id="<?php echo $item['id']; ?>">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
                                 </div>
@@ -141,12 +156,14 @@ foreach ($cart as $cart_item) {
                         <?php endforeach; ?>
                     </div>
                 </div>
+
             <?php endforeach; ?>
         <?php } else { ?>
             <p class="menu-empty">No menu items found for this restaurant.</p>
         <?php } ?>
     </div>
 
+    <!-- Cart bar -->
     <div class="cart-bar <?php echo $cart_count > 0 ? 'show' : ''; ?>" id="cartBar">
         <div class="cart-summary">
             <i class="fa-solid fa-bag-shopping"></i>
@@ -154,7 +171,7 @@ foreach ($cart as $cart_item) {
             Total: <span id="cartTotal"><?php echo number_format($cart_total, 1); ?></span>
         </div>
 
-        <form action="place_order.php" method="POST">
+        <form action="../Order_Placing/place_order.php" method="POST">
             <button type="submit" class="checkout-btn">Place Order</button>
         </form>
     </div>
@@ -166,7 +183,7 @@ document.querySelectorAll('.add-cart-btn').forEach(button => {
     button.addEventListener('click', function () {
         const itemId = this.dataset.id;
 
-        fetch('add_to_cart.php', {
+        fetch('../Order_Placing/add_to_cart.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -177,19 +194,18 @@ document.querySelectorAll('.add-cart-btn').forEach(button => {
         .then(data => {
             if (data.success) {
                 document.getElementById('cartCount').textContent = data.cart_count;
-                document.getElementById('cartTotal').textContent = data.cart_total.toFixed(1);
+                document.getElementById('cartTotal').textContent = data.cart_total;
                 document.getElementById('cartBar').classList.add('show');
             } else {
                 alert(data.message || 'Failed to add item.');
             }
         })
         .catch(error => {
-            console.error(error);
+            console.error('Fetch error:', error);
             alert('Error adding item.');
         });
     });
 });
-
 </script>
 
 </body>
