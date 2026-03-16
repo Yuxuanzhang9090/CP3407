@@ -1,74 +1,110 @@
-<?php
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Online Payment</title>
+</head>
 
-$foods = [
-    ["name" => "Pepperoni Pizza", "price" => 12.50, "qty" => 1],
-    ["name" => "Garlic Bread", "price" => 5.00, "qty" => 2]
-];
+<body>
 
-$total = 0;
-?>
+<div class="container">
 
-<h2>Order Summary</h2>
+<h2>Payment Page</h2>
 
-<table border="1">
-<tr>
-<th>Food</th>
-<th>Price</th>
-<th>Quantity</th>
-<th>Subtotal</th>
-</tr>
+<!-- Task 1: Display food details -->
+<div class="order-summary">
 
-<?php foreach ($foods as $food): 
-$subtotal = $food['price'] * $food['qty'];
-$total += $subtotal;
-?>
+<h3>Order Summary</h3>
 
-<tr>
-<td><?php echo $food['name']; ?></td>
-<td>$<?php echo $food['price']; ?></td>
-<td><?php echo $food['qty']; ?></td>
-<td>$<?php echo $subtotal; ?></td>
-</tr>
+<div class="order-item">
+<span>Fried Rice</span>
+<span>$8.00</span>
+</div>
 
-<?php endforeach; ?>
+<div class="order-item">
+<span>Bubble Tea</span>
+<span>$5.00</span>
+</div>
 
-</table>
+<div class="order-item total">
+<span>Total</span>
+<span>$13.00</span>
+</div>
 
-<h3>Total Price: $<?php echo $total; ?></h3>
+</div>
 
-<h2>Select Payment Method</h2>
+<form id="paymentForm" action="process_payment.php" method="POST">
 
-<form action="process_payment.php" method="POST">
+<!-- Task 2: Payment Method -->
+<h3>Select Payment Method</h3>
 
-<input type="radio" name="payment_method" value="credit_card" required>
+<label>
+<input type="radio" name="payment_method" value="credit" required>
 Credit Card
+</label>
 
-<br>
-
-<input type="radio" name="payment_method" value="debit_card">
+<label>
+<input type="radio" name="payment_method" value="debit">
 Debit Card
+</label>
 
-<br>
+<label>
+<input type="radio" name="payment_method" value="visa">
+Visa
+</label>
 
-<input type="radio" name="payment_method" value="paypal">
-PayPal
+<!-- Task 3: Card Details -->
 
-<br><br>
+<h3>Card Information</h3>
 
-<h3>Card Details</h3>
+<input type="text" name="card_name" placeholder="Name on Card">
 
-Card Number:<br>
-<input type="text" name="card_number"><br><br>
+<input type="text" name="card_number" placeholder="Card Number">
 
-Card Holder Name:<br>
-<input type="text" name="card_name"><br><br>
+<input type="text" name="expiry" placeholder="MM/YY">
 
-Expiry Date:<br>
-<input type="month" name="expiry"><br><br>
+<input type="text" name="cvv" placeholder="CVV">
 
-CVV:<br>
-<input type="text" name="cvv"><br><br>
+<div id="error" class="error"></div>
 
 <button type="submit">Pay Now</button>
 
 </form>
+
+</div>
+
+<script>
+
+// Task 4: Validate payment input
+
+document.getElementById("paymentForm").addEventListener("submit", function(e){
+
+let name = document.querySelector("[name='card_name']").value;
+let number = document.querySelector("[name='card_number']").value;
+let expiry = document.querySelector("[name='expiry']").value;
+let cvv = document.querySelector("[name='cvv']").value;
+
+let error = "";
+
+if(name === "" || number === "" || expiry === "" || cvv === ""){
+error = "Please fill in all payment details.";
+}
+
+if(number.length < 16){
+error = "Card number must be 16 digits.";
+}
+
+if(cvv.length < 3){
+error = "CVV must be 3 digits.";
+}
+
+if(error !== ""){
+e.preventDefault();
+document.getElementById("error").innerText = error;
+}
+
+});
+
+</script>
+
+</body>
+</html>
