@@ -32,6 +32,42 @@
                                 Already have an account? <a href="login.php">Login</a></p>
                                 </div>
                     </form>
+                    <?php  
+                                    
+                                        if(isset($_POST['submit'])) 
+                                        { 
+                                             
+                                          $host = "localhost";
+                                          $user = "root";
+                                          $passwd = "";
+                                          $database = "nomnow";
+                                          $table_name = "users";
+
+
+                                          $connect = mysqli_connect($host,$user,$passwd,$database) 
+                                          or die("could not connect to database");
+                                          $sql="INSERT INTO $table_name(email,password)VALUES('$_POST[Email]','$_POST[Password]' )";
+                                          if (!mysqli_query($connect,$sql))
+                                          {
+                                              die('Error: ' . mysqli_error($connect));
+                                          }
+                                          else{       
+                                          echo "
+                                          
+                                          <center>You have been registered!!</center>
+                                          
+                                        ";
+                                      
+
+                                          }
+                                          mysqli_close($connect);                     
+                                                
+                                        }      
+                                        else{      
+                                              
+                                          }  
+                                           
+                                    ?>
                            
                     
           </div>
