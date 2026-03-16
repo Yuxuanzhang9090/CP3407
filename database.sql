@@ -122,6 +122,3 @@ CREATE TABLE order_items (
     quantity INT,
     price DECIMAL(10,2)
 );
-
-CREATE TABLE cart()
-fjdj
