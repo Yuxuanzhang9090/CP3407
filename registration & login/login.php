@@ -29,15 +29,49 @@
                                 <div class="col-12">
                                 <button type="submit" name="submit" class="btn btn-primary w-100">Login</button>
                                 <p class="text-center mt-3">
-Don't have an account? <a href="Signup.php">Sign up</a></p>
+                                Don't have an account? <a href="Signup.php">Sign up</a></p>
+                                <p class="text-center mt-3">
+                                <a href="Forgot.php"> Forgot Password?</a></p>
                                 </div>
-                                
-                                
-
-                                
-
+                                    
                     </form>
-                           
+                           <?php
+                            if(isset($_POST["submit"])){
+                            if(!empty($_POST['Email']) && !empty($_POST['Password'])) {
+                                $user=$_POST['Email'];
+                                $pass=$_POST['Password'];
+                                $con=mysqli_connect('localhost','root','','nomnow') or die(mysql_error());
+                                $query=mysqli_query($con,"SELECT * FROM users WHERE email='".$user."' AND password='".$pass."'");
+                                $numrows=mysqli_num_rows($query);
+                                if($user == "Admin@gmail.com" && $pass == "12345")
+                                {
+                                session_start();
+                                $_SESSION['sess_user']=$user;
+                                header("Location: admin.php");
+                                }
+                                else
+                                {
+                                if($numrows!=0)
+                                {
+                                while($row=mysqli_fetch_assoc($query))
+                                {
+                                $dbusername=$row['email'];
+                                $dbpassword=$row['password'];
+                                }
+                                if($user == $dbusername && $pass == $dbpassword)
+                                { 
+                                session_start();
+                                $_SESSION['sess_user']=$user;
+                                header("Location: index.php");
+                                }
+                                } else 
+                                {
+                                echo "Invalid username or password!";
+                                }
+                              }
+                            }
+                        }
+                                ?>
                     
           </div>
 
