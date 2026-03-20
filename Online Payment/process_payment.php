@@ -1,4 +1,5 @@
 <?php
+session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -8,19 +9,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $cvv = $_POST['cvv'] ?? "";
     $payment_method = $_POST['payment_method'] ?? "";
 
+    // Validation
     if(empty($card_number) || empty($card_name) || empty($expiry) || empty($cvv)){
         die("Please fill in all payment details.");
     }
 
-    if(strlen($card_number) != 16){
+    if(strlen($card_number) != 16 || !is_numeric($card_number)){
         die("Invalid card number.");
     }
 
-    if(strlen($cvv) != 3){
+    if(strlen($cvv) != 3 || !is_numeric($cvv)){
         die("Invalid CVV.");
     }
 
-    // CONNECT TO DATABASE
+    // Connect to database
     $conn = new mysqli("localhost", "root", "", "food_delivery");
 
     if ($conn->connect_error) {
@@ -28,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Example total price (later this should come from cart)
-    $total_price = 22.50;
+    $total_price = 13.00;
 
     // INSERT PAYMENT
     $sql = "INSERT INTO payments (card_name, payment_method, total_price)
@@ -36,14 +38,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssd", $card_name, $payment_method, $total_price);
-    $stmt->execute();
+    
+    if($stmt->execute()){
+        header("Location: confirmation.php");
+        exit();
+    } else {
+        echo "Payment failed.";
+    }
 
-    // REDIRECT AFTER SAVING
-    header("Location: confirmation.php");
-    exit();
+    $stmt->close();
+    $conn->close();
 
 } else {
     echo "Invalid access.";
 }
-
 ?>

@@ -122,3 +122,11 @@ CREATE TABLE order_items (
     quantity INT,
     price DECIMAL(10,2)
 );
+
+CREATE TABLE payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    card_name VARCHAR(100),
+    payment_method VARCHAR(50),
+    total_price DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
