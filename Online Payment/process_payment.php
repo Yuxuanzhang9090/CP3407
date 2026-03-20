@@ -3,7 +3,7 @@ session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $card_number = $_POST['card_number'] ?? "";
+    $card_number = str_replace(' ', '', $_POST['card_number'] ?? "");
     $card_name = $_POST['card_name'] ?? "";
     $expiry = $_POST['expiry'] ?? "";
     $cvv = $_POST['cvv'] ?? "";
@@ -38,9 +38,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssd", $card_name, $payment_method, $total_price);
-    
+
     if($stmt->execute()){
-        header("Location: confirmation.php");
+        header("Location: payment_confirmation.php");
         exit();
     } else {
         echo "Payment failed.";
