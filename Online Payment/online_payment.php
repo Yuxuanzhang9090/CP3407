@@ -3,11 +3,11 @@
 <head>
     <title>NomNom - Payment</title>
 
-    <!-- Bootstrap (same as teammate) -->
+    <!-- Bootstrap -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- Your team CSS -->
+    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -45,33 +45,35 @@
         <div class="mb-3">
             <label class="form-label">Payment Method</label><br>
 
-            <input type="radio" name="payment_method" required> Credit Card<br>
-            <input type="radio" name="payment_method"> Debit Card<br>
-            <input type="radio" name="payment_method"> Visa
+            <input type="radio" name="payment_method" value="credit" required> Credit Card<br>
+            <input type="radio" name="payment_method" value="debit"> Debit Card<br>
+            <input type="radio" name="payment_method" value="visa"> Visa
         </div>
 
         <!-- Card Details -->
         <div class="mb-3">
             <label class="form-label">Name on Card</label>
-            <input type="text" class="form-control" placeholder="Enter name">
+            <input type="text" class="form-control" name="card_name" placeholder="Enter name">
         </div>
 
         <div class="mb-3">
             <label class="form-label">Card Number</label>
-            <input type="text" class="form-control" placeholder="1234 5678 9012 3456">
+            <input type="text" class="form-control" name="card_number" placeholder="1234 5678 9012 3456">
         </div>
 
         <div class="row">
             <div class="col">
                 <label class="form-label">Expiry</label>
-                <input type="text" class="form-control" placeholder="MM/YY">
+                <input type="text" class="form-control" name="expiry" placeholder="MM/YY">
             </div>
 
             <div class="col">
                 <label class="form-label">CVV</label>
-                <input type="text" class="form-control" placeholder="123">
+                <input type="text" class="form-control" name="cvv" placeholder="123">
             </div>
         </div>
+
+        <div id="error" class="text-danger mt-2"></div>
 
         <button type="submit" class="btn btn-primary w-100 mt-3">Pay Now</button>
 
