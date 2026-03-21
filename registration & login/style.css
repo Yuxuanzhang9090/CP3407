@@ -129,6 +129,7 @@ body {
 /* Menu sections spacing */
 .menu-sections {
     margin-top: 20px;
+    padding-bottom: 100px;
 }
 
 /* Menu header */
@@ -140,7 +141,68 @@ body {
     box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
 }
 
-/* GRID for food items (THIS FIXES YOUR PROBLEM) */
+.menu-header-flex {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.menu-logo {
+    background: #FF8C42;
+    color: white;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.floating-cart-link {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: white;
+    color: #FF8C42;
+    padding: 10px;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Style for the navigation bar container */
+.menu-tabs {
+    display: flex;
+    gap: 15px;
+    padding: 15px 0;
+    overflow-x: auto; /* Allows scrolling on mobile */
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+/* Style for each individual category link */
+.menu-tab {
+    text-decoration: none;
+    color: #444;           /* Darker text for readability */
+    font-weight: 600;
+    padding: 10px 25px;
+    border-radius: 25px;   /* Makes them nice and pill-shaped */
+    background: #ffffff;   /* Pure white background */
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    border: 1px solid #ddd; /* Subtle border so they don't disappear into the background */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Soft shadow for depth */
+}
+
+/* They only turn orange when you hover over them */
+.menu-tab:hover {
+    background: #FF8C42; 
+    color: white;
+    border-color: #FF8C42;
+}
+
+/* GRID for food items */
 .menu-grid-phone {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -189,4 +251,36 @@ body {
     border-radius: 50%;
     padding: 8px 12px;
     cursor: pointer;
+}
+
+.cart-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    
+    background: #FF8C42;
+    color: white;
+    padding: 15px 20px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    box-shadow: 0px -5px 15px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+/* Hide when empty */
+.cart-bar:not(.show) {
+    display: none;
+}
+
+.checkout-btn {
+    background: white;
+    color: #FF8C42;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
 }

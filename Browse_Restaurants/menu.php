@@ -83,18 +83,17 @@ foreach ($cart as $cart_item) {
         <div class="menu-banner-overlay"></div>
 
         <!-- Cart icon scrolls to cart bar -->
-        <a href="#cartBar" class="menu-cart-icon">
+        <a href="#cartBar" class="floating-cart-link">
             <i class="fa-solid fa-cart-shopping"></i>
         </a>
     </div>
 
     <!-- Restaurant info -->
     <div class="menu-info-card">
-        <div class="menu-logo">
-            <?php
-            $firstChar = mb_substr($restaurant['name'], 0, 2, 'UTF-8');
-            echo htmlspecialchars($firstChar);
-            ?>
+        <div class="menu-header-flex">
+            <div class="menu-logo">
+              <?php echo mb_substr($restaurant['name'], 0, 2, 'UTF-8'); ?>
+            </div>
         </div>
 
         <h1 class="menu-store-name">
@@ -117,7 +116,7 @@ foreach ($cart as $cart_item) {
     <?php if (!empty($categories)) { ?>
         <div class="menu-tabs">
             <?php foreach ($categories as $index => $category) { ?>
-                <a href="#cat-<?php echo $index; ?>" class="menu-tab <?php echo $index === 0 ? 'active' : ''; ?>">
+                <a href="#cat-<?php echo $index; ?>" class="menu-tab">
                     <?php echo htmlspecialchars($category); ?>
                 </a>
             <?php } ?>
@@ -171,7 +170,7 @@ foreach ($cart as $cart_item) {
     </div>
 
     <!-- Cart bar -->
-    <div class="cart-bar <?php echo $cart_count > 0 ? 'show' : ''; ?>" id="cartBar">
+    <div class="cart-bar show" id="cartBar">
         <div class="cart-summary">
             <i class="fa-solid fa-bag-shopping"></i>
             <span id="cartCount"><?php echo $cart_count; ?></span> items |
