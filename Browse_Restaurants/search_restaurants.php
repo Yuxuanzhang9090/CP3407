@@ -47,9 +47,17 @@ if (isset($_GET['category']) && trim($_GET['category']) !== "") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Restaurants</title>
-    <link rel="stylesheet" href="/CP3407-main/style.css">
+
+    <!-- Bootstrp -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/CP3407/registration & login/style.css">
+
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
+
 <body>
 
 <div class="page-container">
@@ -63,15 +71,16 @@ if (isset($_GET['category']) && trim($_GET['category']) !== "") {
 
     <!-- Search box -->
     <div class="search-box" style="margin: 20px 0; text-align: center;">
-        <form method="GET" action="">
+        <form method="GET" action="" class="d-flex justify-content-center gap-2">
             <input 
                 type="text" 
-                name="category" 
+                name="category"
+                class="form-control w-50" 
                 placeholder="Enter category, e.g. Pizza" 
                 value="<?php echo htmlspecialchars($search); ?>"
                 required
             >
-            <button type="submit">
+            <button type="submit" class="btn btn-primary">
                 Search
             </button>
         </form>

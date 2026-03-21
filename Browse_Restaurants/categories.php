@@ -22,15 +22,23 @@ if (!$categoriesResult) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Restaurants</title>
-    <link rel="stylesheet" href="/CP3407-main/style.css">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/CP3407/registration & login/style.css">
+
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
+
 <body>
 
 <div class="page-container">
 
     <!-- Search entry -->
-    <div class="search-entry" style="margin: 20px 0; text-align: center;">
+    <div class="text-center mb-4">
         <a href="search_restaurants.php" style="text-decoration: none;">
             <i class="fa-solid fa-magnifying-glass"></i>
             <span>Search category...</span>
@@ -67,7 +75,7 @@ if (!$categoriesResult) {
     <?php while ($category = $categoriesResult->fetch_assoc()) { ?>
         
         <div class="category-section" id="category-<?php echo $category['id']; ?>">
-            <h2 class="category-title"><?php echo htmlspecialchars($category['name']); ?></h2>
+            <h2 class="category-title mb-3"><?php echo htmlspecialchars($category['name']); ?></h2>
             <hr class="category-line">
 
             <div class="restaurant-row">

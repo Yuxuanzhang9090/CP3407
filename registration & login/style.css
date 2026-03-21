@@ -17,9 +17,8 @@ body {
     background-size: cover;
     background-position: center;
     min-height: 100vh;
+    display: block !important;
 
-    display: flex;
-    flex-direction: column;
 }
 
 .container {
@@ -57,4 +56,56 @@ body {
 .btn-outline-primary:hover {
     background-color: #FF8C42;
     color: #fff;
+}
+
+/* Page wrapper */
+.page-container {
+    max-width: 1200px;
+    margin: 120px auto;
+    width: 100%;
+}
+
+/* Category row (horizontal scroll) */
+.cat-row {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    margin-bottom: 30px;
+}
+
+.cat-item {
+    text-align: center;
+    text-decoration: none;
+    color: black;
+}
+
+.cat-avatar img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Restaurant grid */
+.restaurant-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* Restaurant card style */
+.restaurant-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+}
+
+.restaurant-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Remove link styling */
+.restaurant-link {
+    display: block;
 }
