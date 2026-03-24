@@ -169,3 +169,7 @@ CREATE TABLE transfers (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE orders
+ADD COLUMN split_status VARCHAR(50) DEFAULT 'pending',
+ADD COLUMN split_error TEXT NULL;
+
