@@ -28,6 +28,7 @@ CREATE TABLE restaurants (
     address VARCHAR(255) NOT NULL,
     rating DECIMAL(2,1),
     opening_hours VARCHAR(100),
+    stripe_account_id VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
@@ -67,6 +68,22 @@ INSERT INTO restaurants (category_id, name, address, rating, opening_hours) VALU
 (6, 'Domino''s Pizza Bishan', '150 Bishan Street 11, #01-135, Singapore 570150', 4.1, '10:30 AM - 11:00 PM'),
 (6, 'Little Caesars Pizza', '1 HarbourFront Walk, #B2-12 VivoCity, Singapore 098585', 4.0, '11:00 AM - 10:00 PM'),
 (6, 'Canadian Pizza', '500 Toa Payoh Lorong 6, #01-01, Singapore 310500', 4.1, '11:00 AM - 11:00 PM');
+CREATE TABLE riders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    vehicle VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'available',
+    stripe_account_id VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO riders (name, phone, vehicle, status) VALUES
+('Jason Lim', '98765432', 'Motorcycle', 'available'),
+('Emily Tan', '91234567', 'Bicycle', 'available'),
+('Ryan Lee', '92345678', 'Scooter', 'available'),
+('Sarah Ong', '93456789', 'Motorcycle', 'available'),
+('Daniel Koh', '94567890', 'Bicycle', 'available');
 
 CREATE TABLE menu_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -109,12 +126,22 @@ CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     restaurant_id INT,
-    rider_id INT,
+    rider_id INT NULL,
     total_price DECIMAL(10,2),
-    phone VARCHAR(20),
+    phone VARCHAR(50),
     delivery_address VARCHAR(255),
     notes TEXT,
-    status VARCHAR(50),
+    status VARCHAR(50) DEFAULT 'pending',
+    payment_status VARCHAR(50) DEFAULT 'pending',
+    stripe_checkout_session_id VARCHAR(255),
+    stripe_payment_intent_id VARCHAR(255),
+    subtotal DECIMAL(10,2) DEFAULT 0.00,
+    delivery_fee DECIMAL(10,2) DEFAULT 0.00,
+    service_fee DECIMAL(10,2) DEFAULT 0.00,
+    platform_fee DECIMAL(10,2) DEFAULT 0.00,
+    merchant_amount DECIMAL(10,2) DEFAULT 0.00,
+    rider_amount DECIMAL(10,2) DEFAULT 0.00,
+    is_paid INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (restaurant_id) REFERENCES restaurants(id),
     FOREIGN KEY (rider_id) REFERENCES riders(id)
@@ -131,28 +158,14 @@ CREATE TABLE order_items (
     FOREIGN KEY (menu_item_id) REFERENCES menu_items(id)
 );
 
-CREATE TABLE payments (
+CREATE TABLE transfers (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT,
-    card_name VARCHAR(100),
-    payment_method VARCHAR(50),
-    total_price DECIMAL(10,2),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES orders(id)
-);
-
-CREATE TABLE riders (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    vehicle VARCHAR(50) NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'available',
+    order_id INT NOT NULL,
+    recipient_type VARCHAR(50) NOT NULL,
+    recipient_account_id VARCHAR(255) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    stripe_transfer_id VARCHAR(255) DEFAULT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO riders (name, phone, vehicle, status) VALUES
-('Jason Lim', '98765432', 'Motorcycle', 'available'),
-('Emily Tan', '91234567', 'Bicycle', 'available'),
-('Ryan Lee', '92345678', 'Scooter', 'available'),
-('Sarah Ong', '93456789', 'Motorcycle', 'available'),
-('Daniel Koh', '94567890', 'Bicycle', 'available');
