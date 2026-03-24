@@ -9,6 +9,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+
 /* Read cart and restaurant from session */
 $cart = $_SESSION['cart'] ?? [];
 $restaurant_id = $_SESSION['restaurant_id'] ?? 0;
