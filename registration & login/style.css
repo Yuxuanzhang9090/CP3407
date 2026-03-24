@@ -284,3 +284,291 @@ body {
     border-radius: 8px;
     font-weight: bold;
 }
+
+.checkout-body {
+    background:
+        linear-gradient(135deg, rgba(255,248,242,0.95), rgba(255,255,255,0.98)),
+        url("online food.jpg");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #1f2937;
+}
+
+.checkout-wrapper {
+    max-width: 1280px;
+    margin: 60px auto;
+    padding: 20px;
+}
+
+.checkout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.checkout-badge {
+    display: inline-block;
+    background: rgba(255, 140, 66, 0.12);
+    color: #e46f1d;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+
+.checkout-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: #1f2937;
+}
+
+.checkout-subtitle {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 0;
+    max-width: 760px;
+}
+
+.checkout-card {
+    position: relative;
+    z-index: 1;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.65);
+    border-radius: 24px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    overflow: visible;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, z-index 0.25s ease;
+}
+
+.checkout-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.14);
+    z-index: 20;
+}
+
+.checkout-card-body {
+    padding: 28px;
+}
+
+.section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0;
+    color: #111827;
+}
+
+/* Restaurant section */
+.restaurant-hero {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.restaurant-hero-icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, #FF8C42, #ffb277);
+    color: white;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    box-shadow: 0 10px 24px rgba(255, 140, 66, 0.25);
+}
+
+.restaurant-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.restaurant-address {
+    color: #6b7280;
+    margin: 0;
+}
+
+.restaurant-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.meta-pill {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #fff4ec;
+    color: #d96a1b;
+    font-size: 0.88rem;
+    font-weight: 700;
+    border: 1px solid #ffd9bf;
+}
+
+/* Table */
+.checkout-table {
+    margin-bottom: 0;
+}
+
+.checkout-table thead th {
+    border: none;
+    background: #fff7f1;
+    color: #7c4a27;
+    font-weight: 700;
+    padding: 16px 18px;
+}
+
+.checkout-table tbody td {
+    padding: 18px;
+    border-color: #f1f5f9;
+    vertical-align: middle;
+}
+
+.checkout-table tbody tr:hover {
+    background: rgba(255, 140, 66, 0.04);
+}
+
+/* Form */
+.checkout-label {
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.checkout-input {
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    padding: 14px 16px;
+    font-size: 0.98rem;
+    box-shadow: none;
+    transition: all 0.2s ease;
+    background: #fcfcfd;
+}
+
+.checkout-input:focus {
+    border-color: #FF8C42;
+    box-shadow: 0 0 0 0.2rem rgba(255, 140, 66, 0.15);
+    background: #fff;
+}
+
+/* Rider */
+.rider-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #fff7f1, #ffffff);
+    border: 1px solid #ffe2cf;
+    margin-bottom: 20px;
+}
+
+.rider-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF8C42, #ffb277);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    box-shadow: 0 8px 18px rgba(255, 140, 66, 0.22);
+}
+
+.rider-name {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.rider-status {
+    font-size: 0.92rem;
+    color: #6b7280;
+}
+
+/* Info rows */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+    color: #4b5563;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-row strong {
+    color: #111827;
+}
+
+/* Total box */
+.total-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #FF8C42, #f97316);
+    color: white;
+    border-radius: 18px;
+    padding: 18px 20px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    box-shadow: 0 12px 24px rgba(249, 115, 22, 0.22);
+}
+
+.total-box strong {
+    font-size: 1.35rem;
+}
+
+/* Button */
+.place-order-btn {
+    background: linear-gradient(135deg, #FF8C42, #f97316);
+    border: none;
+    color: white;
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 1rem;
+    box-shadow: 0 12px 24px rgba(249, 115, 22, 0.25);
+    transition: all 0.2s ease;
+}
+
+.place-order-btn:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #f97d2e, #ea580c);
+    color: white;
+}
+
+.right-sticky {
+    position: sticky;
+    top: 24px;
+    z-index: 5;
+}
+
