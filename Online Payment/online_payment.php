@@ -1,119 +1,77 @@
+<?php
+require_once("config.php");
+
+$order_id = (int)($_GET['order_id'] ?? 0);
+
+if ($order_id <= 0) {
+    die("Invalid order ID.");
+}
+
+
+$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
+$stmt->bind_param("i", $order_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    die("Order not found.");
+}
+
+$order = $result->fetch_assoc();
+
+$stmt_items = $conn->prepare("SELECT * FROM order_items WHERE order_id = ?");
+$stmt_items->bind_param("i", $order_id);
+$stmt_items->execute();
+$result_items = $stmt_items->get_result();
+?>
 <!DOCTYPE html>
 <html>
 <head>
     <title>NomNom - Payment</title>
-
-    <!-- Bootstrap -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- CSS -->
     <link rel="stylesheet" href="/CP3407/registration & login/style.css">
 </head>
-
 <body>
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Complete Payment</h2>
 
-<div class="container">
+    <div class="card p-4">
+        <h4>Order Summary</h4>
 
-    <h2 class="text-center mb-4">Payment</h2>
-
-    <form id="paymentForm" action="process_payment.php" method="POST">
-
-        <!-- Order Summary -->
-        <div class="mb-4">
-            <h4>Order Summary</h4>
-
+        <?php while ($item = $result_items->fetch_assoc()): ?>
             <div class="d-flex justify-content-between">
-                <span>Fried Rice</span>
-                <span>$8.00</span>
+                <span><?php echo htmlspecialchars($item['item_name']); ?> x<?php echo (int)$item['quantity']; ?></span>
+                <span>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></span>
             </div>
+        <?php endwhile; ?>
 
-            <div class="d-flex justify-content-between">
-                <span>Bubble Tea</span>
-                <span>$5.00</span>
-            </div>
+        <hr>
 
-            <hr>
-
-            <div class="d-flex justify-content-between fw-bold">
-                <span>Total</span>
-                <span>$13.00</span>
-            </div>
+        <div class="d-flex justify-content-between">
+            <span>Subtotal</span>
+            <span>$<?php echo number_format($order['subtotal'], 2); ?></span>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span>Delivery Fee</span>
+            <span>$<?php echo number_format($order['delivery_fee'], 2); ?></span>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span>Service Fee</span>
+            <span>$<?php echo number_format($order['service_fee'], 2); ?></span>
         </div>
 
-        <!-- Payment Method -->
-        <div class="mb-3">
-            <label class="form-label">Payment Method</label><br>
+        <hr>
 
-            <input type="radio" name="payment_method" value="credit" required> Credit Card<br>
-            <input type="radio" name="payment_method" value="debit"> Debit Card<br>
-            <input type="radio" name="payment_method" value="visa"> Visa
+        <div class="d-flex justify-content-between fw-bold">
+            <span>Total</span>
+            <span>$<?php echo number_format($order['total_price'], 2); ?></span>
         </div>
 
-        <!-- Card Details -->
-        <div class="mb-3">
-            <label class="form-label">Name on Card</label>
-            <input type="text" class="form-control" name="card_name" placeholder="Enter name">
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Card Number</label>
-            <input type="text" class="form-control" name="card_number" placeholder="1234 5678 9012 3456">
-        </div>
-
-        <div class="row">
-            <div class="col">
-                <label class="form-label">Expiry</label>
-                <input type="text" class="form-control" name="expiry" placeholder="MM/YY">
-            </div>
-
-            <div class="col">
-                <label class="form-label">CVV</label>
-                <input type="text" class="form-control" name="cvv" placeholder="123">
-            </div>
-        </div>
-
-        <div id="error" class="text-danger mt-2"></div>
-
-        <button type="submit" class="btn btn-primary w-100 mt-3">Pay Now</button>
-
-    </form>
-
+        <a href="create_checkout.php?order_id=<?php echo $order_id; ?>" class="btn btn-primary w-100 mt-4">
+            Pay with Stripe
+        </a>
+    </div>
 </div>
-
-
-<!-- Bootstrap JS (same as teammate) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-// Validation (same logic, cleaner)
-
-document.getElementById("paymentForm").addEventListener("submit", function(e){
-
-    let name = document.querySelector("[name='card_name']").value.trim();
-    let number = document.querySelector("[name='card_number']").value.trim();
-    let expiry = document.querySelector("[name='expiry']").value.trim();
-    let cvv = document.querySelector("[name='cvv']").value.trim();
-
-    let error = "";
-
-    if(!name || !number || !expiry || !cvv){
-        error = "Please fill in all payment details.";
-    }
-    else if(number.length < 16){
-        error = "Card number must be 16 digits.";
-    }
-    else if(cvv.length < 3){
-        error = "CVV must be at least 3 digits.";
-    }
-
-    if(error){
-        e.preventDefault();
-        document.getElementById("error").innerText = error;
-    }
-
-});
-</script>
-
 </body>
 </html>
