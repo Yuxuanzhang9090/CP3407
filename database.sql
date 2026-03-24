@@ -109,9 +109,15 @@ CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     restaurant_id INT,
+    rider_id INT,
     total_price DECIMAL(10,2),
+    phone VARCHAR(20),
+    delivery_address VARCHAR(255),
+    notes TEXT,
     status VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (restaurant_id) REFERENCES restaurants(id),
+    FOREIGN KEY (rider_id) REFERENCES riders(id)
 );
 
 CREATE TABLE order_items (
@@ -120,13 +126,33 @@ CREATE TABLE order_items (
     menu_item_id INT,
     item_name VARCHAR(100),
     quantity INT,
-    price DECIMAL(10,2)
+    price DECIMAL(10,2),
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (menu_item_id) REFERENCES menu_items(id)
 );
 
 CREATE TABLE payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
     card_name VARCHAR(100),
     payment_method VARCHAR(50),
     total_price DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
+CREATE TABLE riders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    vehicle VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'available',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+INSERT INTO riders (name, phone, vehicle, status) VALUES
+('Jason Lim', '98765432', 'Motorcycle', 'available'),
+('Emily Tan', '91234567', 'Bicycle', 'available'),
+('Ryan Lee', '92345678', 'Scooter', 'available'),
+('Sarah Ong', '93456789', 'Motorcycle', 'available'),
+('Daniel Koh', '94567890', 'Bicycle', 'available');
