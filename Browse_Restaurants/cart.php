@@ -36,17 +36,32 @@ $total = 0;
             </thead>
 
             <tbody>
-                <?php foreach ($cart as $item): 
+                <?php foreach ($cart as $id => $item): 
                     $subtotal = $item['price'] * $item['quantity'];
                     $total += $subtotal;
                 ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($item['name']); ?></td>
-                        <td><?php echo $item['price']; ?></td>
-                        <td><?php echo $item['quantity']; ?></td>
-                        <td><?php echo number_format($subtotal, 2); ?></td>
-                    </tr>
-                <?php endforeach; ?>
+                <tr>
+                   <td><?php echo htmlspecialchars($item['name']); ?></td>
+
+                   <td><?php echo $item['price']; ?></td>
+
+                   <td>
+                       <a href="update_cart.php?action=decrease&id=<?php echo $id; ?>" class="btn btn-sm btn-outline-secondary">-</a>
+
+                       <?php echo $item['quantity']; ?>
+
+                       <a href="update_cart.php?action=increase&id=<?php echo $id; ?>" class="btn btn-sm btn-outline-secondary">+</a>
+                    </td>
+
+                    <td><?php echo number_format($subtotal, 2); ?></td>
+
+                    <td>
+                        <a href="update_cart.php?action=remove&id=<?php echo $id; ?>" class="btn btn-sm btn-danger">
+                            Remove
+                        </a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
             </tbody>
         </table>
 
