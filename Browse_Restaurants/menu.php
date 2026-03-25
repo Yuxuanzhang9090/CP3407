@@ -183,6 +183,39 @@ foreach ($cart as $cart_item) {
         </form>
     </div>
 
+    <!-- Rate and Reviews Section -->
+    <div class="container mt-5">
+        <h3>Rate & Review</h3>
+
+        <form action="submit_review.php" method="POST">
+            <input type="hidden" name="restaurant_id" value="<?php echo $restaurant_id; ?>">
+
+            <!-- Rating -->
+            <div class="mb-3">
+                <label class="form-label">Rating (optional)</label>
+                <select name="rating" class="form-select">
+                    <option value="">Select rating</option>
+                    <option value="1">⭐ 1</option>
+                    <option value="2">⭐⭐ 2</option>
+                    <option value="3">⭐⭐⭐ 3</option>
+                    <option value="4">⭐⭐⭐⭐ 4</option>
+                    <option value="5">⭐⭐⭐⭐⭐ 5</option>
+                </select>
+            </div>
+
+            <!-- Review -->
+            <div class="mb-3">
+                <label class="form-label">Review (optional)</label>
+                <textarea name="review" class="form-control" rows="3"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Submit Review
+            </button>
+        </form>
+    </div>
+
+
 </div>
 
 <script>
