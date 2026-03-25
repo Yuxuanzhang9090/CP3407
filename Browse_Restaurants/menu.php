@@ -213,9 +213,41 @@ foreach ($cart as $cart_item) {
                 Submit Review
             </button>
         </form>
+        <?php
+        $sql_reviews = "SELECT * FROM reviews WHERE restaurant_id = ? ORDER BY created_at DESC";
+        $stmt_reviews = $conn->prepare($sql_reviews);
+        $stmt_reviews->bind_param("i", $restaurant_id);
+        $stmt_reviews->execute();
+        $result_reviews = $stmt_reviews->get_result();
+        ?>
+
+        <div class="container mt-4">
+            <h4>Customer Reviews</h4>
+
+            <?php if ($result_reviews->num_rows > 0): ?>
+                <?php while ($r = $result_reviews->fetch_assoc()): ?>
+                    <div class="card mb-3 p-3">
+
+                        <!-- Stars -->
+                        <div>
+                            <?php
+                            if (!empty($r['rating'])) {
+                                echo str_repeat("⭐", $r['rating']);
+                            }
+                            ?>
+                        </div>
+
+                        <!-- Review -->
+                        <p><?php echo htmlspecialchars($r['review']); ?></p>
+
+                        <!-- User -->
+                        <small>By: <?php echo htmlspecialchars($r['user_email']); ?></small>
+                    </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <p>No reviews yet.</p>
+            <?php endif; ?>
     </div>
-
-
 </div>
 
 <script>
