@@ -85,6 +85,7 @@ foreach ($cart as $cart_item) {
         <!-- Cart icon scrolls to cart bar -->
         <a href="cart.php" class="floating-cart-link">
             <i class="fa-solid fa-cart-shopping"></i>
+            <?php echo $cart_count; ?>
         </a>
     </div>
 
