@@ -83,7 +83,7 @@ foreach ($cart as $cart_item) {
         <div class="menu-banner-overlay"></div>
 
         <!-- Cart icon scrolls to cart bar -->
-        <a href="#cartBar" class="floating-cart-link">
+        <a href="cart.php" class="floating-cart-link">
             <i class="fa-solid fa-cart-shopping"></i>
         </a>
     </div>
