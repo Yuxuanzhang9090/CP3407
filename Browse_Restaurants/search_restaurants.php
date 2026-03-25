@@ -99,26 +99,28 @@ if (isset($_GET['category']) && trim($_GET['category']) !== "") {
 
                 <div class="restaurant-row">
                     <?php foreach ($restaurants as $restaurant): ?>
-                        <div class="restaurant-card">
-                            <h3 class="restaurant-name">
-                                <?php echo htmlspecialchars($restaurant['name']); ?>
-                            </h3>
+                        <a href="menu.php?id=<?php echo $restaurant['id']; ?>" class="restaurant-link">
+                            <div class="restaurant-card">
+                                <h3 class="restaurant-name">
+                                    <?php echo htmlspecialchars($restaurant['name']); ?>
+                                </h3>
 
-                            <p class="restaurant-address">
-                                <i class="fa-solid fa-location-dot"></i>
-                                <?php echo htmlspecialchars($restaurant['address']); ?>
-                            </p>
+                                <p class="restaurant-address">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    <?php echo htmlspecialchars($restaurant['address']); ?>
+                                </p>
 
-                            <p class="restaurant-rating">
-                                <i class="fa-solid fa-star"></i>
-                                Rating: <?php echo htmlspecialchars($restaurant['rating']); ?>
-                            </p>
+                                <p class="restaurant-rating">
+                                    <i class="fa-solid fa-star"></i>
+                                    Rating: <?php echo htmlspecialchars($restaurant['rating']); ?>
+                                </p>
 
-                            <p class="restaurant-hours">
-                                <i class="fa-regular fa-clock"></i>
-                                <?php echo htmlspecialchars($restaurant['opening_hours']); ?>
-                            </p>
-                        </div>
+                                <p class="restaurant-hours">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <?php echo htmlspecialchars($restaurant['opening_hours']); ?>
+                                </p>
+                            </div>
+                        </a>
                     <?php endforeach; ?>
                 </div>
             </div>
