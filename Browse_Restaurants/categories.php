@@ -52,7 +52,7 @@ if (!$categoriesResult) {
 
     <!-- Right: Logout -->
     <div class="ms-auto">
-        <a href="/CP3407/registration_login/logout.php" class="btn btn-outline-danger">
+        <a href="/CP3407/registration%20&%20login/logout.php" class="btn btn-outline-danger">
             Logout
         </a>
     </div>
