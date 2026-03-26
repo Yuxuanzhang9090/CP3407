@@ -62,7 +62,7 @@
                                 { 
                                 session_start();
                                 $_SESSION['sess_user']=$user;
-                                header("Location: index.php");
+                                header("Location: /CP3407/Browse_Restaurants/categories.php");
                                 }
                                 } else 
                                 {
