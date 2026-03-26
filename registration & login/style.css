@@ -65,7 +65,7 @@ body {
 /* Page wrapper */
 .page-container {
     max-width: 1200px;
-    margin: 120px auto 40px auto; /* push down like login page */
+    margin: 40px auto 40px auto; /* push down like login page */
     padding: 20px;
 }
 

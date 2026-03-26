@@ -42,6 +42,24 @@ if (!$categoriesResult) {
 
 <body>
 
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm px-4">
+    
+    <!-- Left: Logo -->
+    <a class="navbar-brand brand-text" href="categories.php">
+        NomNom
+    </a>
+
+    <!-- Right: Logout -->
+    <div class="ms-auto">
+        <a href="/CP3407/registration_login/logout.php" class="btn btn-outline-danger">
+            Logout
+        </a>
+    </div>
+
+</nav>
+
+
 <div class="page-container">
 
     <!-- Search entry -->
