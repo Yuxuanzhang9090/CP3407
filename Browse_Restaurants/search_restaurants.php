@@ -65,7 +65,7 @@ if (isset($_GET['category']) && trim($_GET['category']) !== "") {
     
     <!-- Left: Logo -->
     <a class="navbar-brand brand-text" href="categories.php">
-        NomNom
+        NomNow
     </a>
 
     <!-- Right: Logout -->

@@ -47,7 +47,7 @@ if (!$categoriesResult) {
     
     <!-- Left: Logo -->
     <a class="navbar-brand brand-text" href="categories.php">
-        NomNom
+        NomNow
     </a>
 
     <!-- Right: Logout -->
