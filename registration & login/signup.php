@@ -40,7 +40,7 @@
                                           $host = "localhost";
                                           $user = "root";
                                           $passwd = "";
-                                          $database = "nomnow";
+                                          $database = "food_delivery";
                                           $table_name = "users";
 
 

@@ -40,7 +40,7 @@
                             if(!empty($_POST['Email']) && !empty($_POST['Password'])) {
                                 $user=$_POST['Email'];
                                 $pass=$_POST['Password'];
-                                $con=mysqli_connect('localhost','root','','nomnow') or die(mysql_error());
+                                $con=mysqli_connect('localhost','root','','food_delivery') or die(mysql_error());
                                 $query=mysqli_query($con,"SELECT * FROM users WHERE email='".$user."' AND password='".$pass."'");
                                 $numrows=mysqli_num_rows($query);
                                 if($user == "Admin@gmail.com" && $pass == "12345")
