@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['sess_user'])) {
-    header("Location: login.php");
+    header("Location: /CP3407/registration%20&%20login/login.php");
     exit();
 }
 
