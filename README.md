@@ -10,9 +10,9 @@ https://github.com/Yuxuanzhang9090/CP3407
 ---
 
 ### Team Members
-**Zhang Yuxuan**  
-**Chong Yuan Xin**  
 **Thura Aung**  
+**Chong Yuan Xin**  
+**Zhao Youyang**  
 
 ## 📌 Project Overview
 
