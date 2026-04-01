@@ -1,0 +1,34 @@
+## User Stories
+
+| Title | Short Description | Priority | Estimated Days |
+|------|-----------------|----------|----------------|
+| 1. Registration and Login | I should register and log in to the system so that I can access the app and order food. | High | 3 days |
+| 2. Browse Restaurants and Menus | I want to browse nearby restaurants and view their menus so that I can decide what food to order. | High | 3 days |
+| 3. Add Items to cart and Place Food Order | I want to select food items, add them to a cart, and place an order so that I can purchase meals from nearby restaurants. | High | 3 days |
+| 4. Online Payment | I want to pay online securely so that I can complete my order conveniently. | Medium | 3 days |
+| 5. Track Order | I want to track my order status so that I can find out when my food will arrive. | Medium | 2 days |
+| 6. Rate and Review Restaurants | I want to rate and review restaurants so that I can share my experiences with other users. | Low | 1 day |
+| 7. View Order History | I want to view my previous orders so that I can reorder them easily in the future. | Low | 1 day |
+| 8. Categorize the restaurants and food | I want to choose restaurants through the different category | Low | 2 days |
+
+---
+
+## Iteration Assignment
+
+### Iteration 1
+- 1. Registration and Login  
+- 2. Browse Restaurants and Menus  
+- 3. Add Items to cart and Place Food Order  
+
+---
+
+### Iteration 2
+- 4. Online Payment  
+- 5. Track Order  
+- 8. Categorize the restaurants and food  
+
+---
+
+### Iteration 3
+- 6. Rate and Review Restaurants  
+- 7. View Order History  
