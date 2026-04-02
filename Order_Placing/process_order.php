@@ -3,8 +3,7 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once("../config.php");
-
+require_once(__DIR__ . "/../config.php");
 
 /* Read cart and restaurant from session */
 $cart = $_SESSION['cart'] ?? [];
@@ -109,6 +108,7 @@ foreach ($cart as $item) {
 /* Save for success page if needed */
 $_SESSION['last_order_id'] = $order_id;
 
-header("Location: ../Online Payment/create_checkout.php?order_id=" . $order_id);
+/* Redirect to Stripe checkout */
+header("Location: /CP3407/Online%20Payment/create_checkout.php?order_id=" . $order_id);
 exit;
 ?>
