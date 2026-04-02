@@ -40,7 +40,6 @@ if ($result->num_rows === 0) {
 
 $order = $result->fetch_assoc();
 
-/* 模拟支付成功 + 模拟分账 */
 if (($order['payment_status'] ?? 'pending') !== 'paid') {
     $split_status = 'completed';
     $split_error = null;
