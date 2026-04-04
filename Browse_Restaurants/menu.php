@@ -92,7 +92,7 @@ function resolveMenuItemImage(string $storedPath, string $category): string
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- CSS -->
-    <link rel="stylesheet" href="/CP3407/registration & login/style.css">
+    <link rel="stylesheet" href="/CP3407/registration%20%26%20login/style.css?v=<?php echo filemtime(__DIR__ . '/../registration & login/style.css'); ?>">
 
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">

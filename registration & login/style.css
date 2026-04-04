@@ -133,6 +133,19 @@ body {
     padding-bottom: 100px;
 }
 
+.menu-section {
+    margin-bottom: 28px;
+}
+
+.menu-section + .menu-section {
+    margin-top: 42px;
+}
+
+.menu-section-title {
+    margin: 0 0 18px;
+    line-height: 1.15;
+}
+
 /* Menu header */
 .menu-info-card {
     background: white;
