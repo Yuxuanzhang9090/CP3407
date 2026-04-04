@@ -55,6 +55,30 @@ foreach ($cart as $cart_item) {
     $cart_count += $cart_item['quantity'];
     $cart_total += $cart_item['price'] * $cart_item['quantity'];
 }
+
+function resolveMenuItemImage(string $storedPath, string $category): string
+{
+    $projectRoot = dirname(__DIR__);
+    $normalizedPath = trim(str_replace("\\", "/", $storedPath));
+
+    if ($normalizedPath !== '') {
+        $relativePath = preg_replace('#^\.\./#', '', $normalizedPath);
+        $absolutePath = $projectRoot . DIRECTORY_SEPARATOR . str_replace("/", DIRECTORY_SEPARATOR, $relativePath);
+
+        if (is_file($absolutePath)) {
+            return "/CP3407/" . ltrim($relativePath, "/");
+        }
+    }
+
+    $fallbackByCategory = [
+        'Burgers' => '/CP3407/images/fast_food.png',
+        'Sides' => '/CP3407/images/fast_food.png',
+        'Drinks' => '/CP3407/images/drinks.png',
+        'Desserts' => '/CP3407/images/western_food.png',
+    ];
+
+    return $fallbackByCategory[$category] ?? '/CP3407/images/fast_food.png';
+}
 ?>
 
 <!DOCTYPE html>
@@ -137,9 +161,10 @@ foreach ($cart as $cart_item) {
 
                     <div class="menu-grid-phone">
                         <?php foreach ($items as $item): ?>
+                            <?php $itemImage = resolveMenuItemImage((string)($item['image'] ?? ''), (string)($item['menu_category'] ?? '')); ?>
                             <div class="dish-card">
                                 <div class="dish-image-wrap">
-                                    <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
+                                    <img src="<?php echo htmlspecialchars($itemImage); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>" loading="lazy">
                                 </div>
 
                                 <div class="dish-name">
