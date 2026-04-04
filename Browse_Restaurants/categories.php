@@ -99,7 +99,7 @@ if (!$categoriesResult) {
     <!-- Category sections -->
     <?php while ($category = $categoriesResult->fetch_assoc()) { ?>
         
-        <div class="category-section" id="category-<?php echo $category['id']; ?>">
+        <div class="category-section mb-3" id="category-<?php echo $category['id']; ?>">
             <h2 class="category-title mb-3"><?php echo htmlspecialchars($category['name']); ?></h2>
             <hr class="category-line">
 
