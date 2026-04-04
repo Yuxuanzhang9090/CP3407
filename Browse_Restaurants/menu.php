@@ -187,7 +187,7 @@ foreach ($cart as $cart_item) {
     <div class="container mt-5">
         <h3>Rate & Review</h3>
 
-        <form action="submit_review.php" method="POST">
+        <form action="/CP3407/Rate_and_Review_Restaurants/submit_review.php" method="POST">
             <input type="hidden" name="restaurant_id" value="<?php echo $restaurant_id; ?>">
 
             <!-- Rating -->
@@ -222,32 +222,55 @@ foreach ($cart as $cart_item) {
         ?>
 
         <div class="container mt-4">
-            <h4>Customer Reviews</h4>
+            <div class="customer-reviews-section mt-4">
+            <h3 class="section-title mb-3">Customer Reviews</h3>
 
-            <?php if ($result_reviews->num_rows > 0): ?>
-                <?php while ($r = $result_reviews->fetch_assoc()): ?>
-                    <div class="card mb-3 p-3">
+            <?php
+            // Query the reviews table
+            $reviewSql = "SELECT user_email, rating, review, created_at 
+                          FROM reviews 
+                          WHERE restaurant_id = ? 
+                          ORDER BY created_at DESC";
 
-                        <!-- Stars -->
-                        <div>
-                            <?php
-                            if (!empty($r['rating'])) {
-                                echo str_repeat("⭐", $r['rating']);
-                            }
-                            ?>
-                        </div>
-
-                        <!-- Review -->
-                        <p><?php echo htmlspecialchars($r['review']); ?></p>
-
-                        <!-- User -->
-                        <small>By: <?php echo htmlspecialchars($r['user_email']); ?></small>
+            $stmt = $conn->prepare($reviewSql);
+            $stmt->bind_param("i", $restaurant_id);
+            $stmt->execute();
+            $reviewResult = $stmt->get_result();
+            
+            if ($reviewResult->num_rows > 0):
+                while ($row = $reviewResult->fetch_assoc()):
+                ?>
+                <div class="review-card mb-3 p-3 border rounded shadow-sm bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong class="user-id-text"><?php echo htmlspecialchars($row['user_email']); ?></strong>
+                        <span class="review-date text-muted small"><?php echo date('d M Y', strtotime($row['created_at'])); ?></span>
                     </div>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <p>No reviews yet.</p>
-            <?php endif; ?>
-    </div>
+
+                    <div class="review-stars my-1">
+                        <?php 
+                        // Display stars based on the rating
+                        for ($i = 1; $i <= 5; $i++) {
+                            if ($i <= $row['rating']) {
+                                echo '<i class="fa-solid fa-star text-warning"></i>';
+                            } else {
+                                echo '<i class="fa-regular fa-star text-secondary"></i>';
+                            }
+                        }
+                        ?>
+                    </div>
+
+                    <p class="review-text mt-2 mb-0">
+                       <?php echo nl2br(htmlspecialchars($row['review'])); ?>
+                    </p>
+                </div>
+                <?php
+                endwhile;
+            else:
+                echo '<p class="text-muted">No reviews yet. Be the first to leave one!</p>';
+            endif;
+            ?>
+        </div>
+    </div> </div> ```
 </div>
 
 <script>
