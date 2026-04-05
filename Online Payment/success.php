@@ -1,7 +1,9 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Singapore');
 require_once(__DIR__ . "/../config.php");
 require_once(__DIR__ . "/../vendor/autoload.php");
+require_once(__DIR__ . "/../Tracking_Order/order_helpers.php");
 
 \Stripe\Stripe::setApiKey($stripe_secret_key);
 
@@ -39,6 +41,7 @@ if ($result->num_rows === 0) {
 }
 
 $order = $result->fetch_assoc();
+$_SESSION['user_id'] = $order['user_id'];
 
 if (($order['payment_status'] ?? 'pending') !== 'paid') {
     $split_status = 'completed';
@@ -48,12 +51,16 @@ if (($order['payment_status'] ?? 'pending') !== 'paid') {
         UPDATE orders
         SET payment_status = 'paid',
             status = 'paid',
+            order_status = 'pending',
+            status_updated_at = NOW(),
             split_status = ?,
             split_error = ?
         WHERE id = ?
     ");
     $stmt_update->bind_param("ssi", $split_status, $split_error, $order_id);
     $stmt_update->execute();
+
+    insertOrderStatusHistory($conn, $order_id, 'pending', 'system', 'Payment completed. Order placed successfully.');
 
     $check = $conn->prepare("
         SELECT id
@@ -101,8 +108,10 @@ if (($order['payment_status'] ?? 'pending') !== 'paid') {
     $stmt_refresh->execute();
     $order = $stmt_refresh->get_result()->fetch_assoc();
 }
+
 unset($_SESSION['cart']);
 unset($_SESSION['restaurant_id']);
+
 $stmt2 = $conn->prepare("
     SELECT recipient_type, amount, stripe_transfer_id, status
     FROM transfers
@@ -200,6 +209,14 @@ $stripe_dashboard_this_payment = !empty($stripe_payment_id)
             background: #374151;
         }
 
+        .btn-track {
+            background: #16a34a;
+        }
+
+        .btn-track:hover {
+            background: #15803d;
+        }
+
         .info-box {
             margin-top: 20px;
             padding: 20px;
@@ -230,6 +247,7 @@ $stripe_dashboard_this_payment = !empty($stripe_payment_id)
             <?php if ($order): ?>
                 <p><strong>Total Paid:</strong> SGD <?php echo number_format((float)$order['total_price'], 2); ?></p>
                 <p><strong>Payment Status:</strong> <?php echo htmlspecialchars($order['payment_status'] ?? 'pending'); ?></p>
+                <p><strong>Order Status:</strong> <?php echo htmlspecialchars($order['order_status'] ?? 'pending'); ?></p>
             <?php endif; ?>
         </div>
 
@@ -255,6 +273,10 @@ $stripe_dashboard_this_payment = !empty($stripe_payment_id)
         </div>
 
         <div class="button-group">
+            <a href="/CP3407/Order_Placing/track_order.php?order_id=<?php echo (int)$order_id; ?>" class="btn btn-track">
+                Track Order
+            </a>
+
             <a href="/CP3407/Browse_Restaurants/categories.php" class="btn">Back to Home</a>
 
             <a href="<?php echo htmlspecialchars($stripe_dashboard_all_payments); ?>" 
