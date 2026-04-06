@@ -30,7 +30,7 @@
                           <?php
 if(isset($_POST['submit']))
 {
-    $con=mysqli_connect('localhost','root','','nomnow');
+    $con=mysqli_connect('localhost','root','','food_delivery');
 
     $email=$_POST['email'];
 

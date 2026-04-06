@@ -28,7 +28,7 @@
                                     
                     </form>
                           <?php
-$con=mysqli_connect('localhost','root','','nomnow');
+$con=mysqli_connect('localhost','root','','food_delivery');
 
 if(!isset($_GET['id']))
 {
