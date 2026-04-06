@@ -52,7 +52,7 @@ if (isset($_GET['category']) && trim($_GET['category']) !== "") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- CSS -->
-    <link rel="stylesheet" href="/CP3407/registration & login/style.css">
+    <link rel="stylesheet" href="/CP3407/registration%20%26%20login/style.css">
 
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -152,4 +152,49 @@ if (isset($_GET['category']) && trim($_GET['category']) !== "") {
 </div>
 
 </body>
+<footer class="site-footer">
+    <div class="footer-top">
+        <div class="footer-brand">
+            <h2>Food Delivery</h2>
+            <p>
+                Fast, fresh, and reliable food delivery service.
+                Order your favourite meals anytime and track your order in real time.
+            </p>
+        </div>
+
+        <div class="footer-links">
+            <div class="footer-column">
+                <h3>About</h3>
+                <a href="#">About Us</a>
+                <a href="#">Contact</a>
+                <a href="#">FAQ</a>
+            </div>
+
+            <div class="footer-column">
+                <h3>Customer</h3>
+                <a href="/CP3407/Order_Placing/my_orders.php">My Orders</a>
+                <a href="/CP3407/Order_Placing/track_order.php">Track Order</a>
+                <a href="/CP3407/Browse_Restaurants/categories.php">Browse Food</a>
+            </div>
+
+            <div class="footer-column">
+                <h3>Partner</h3>
+                <a href="#">Join as Restaurant</a>
+                <a href="#">Become a Rider</a>
+                <a href="#">Business Support</a>
+            </div>
+
+            <div class="footer-column">
+                <h3>Follow Us</h3>
+                <a href="#">Facebook</a>
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>© 2026 Food Delivery System | CP3407 Project</p>
+    </div>
+</footer>
 </html>
