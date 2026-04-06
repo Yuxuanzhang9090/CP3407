@@ -4,6 +4,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once(__DIR__ . "/../config.php");
+cp3407_require_login();
 
 /* Read cart and restaurant from session */
 $cart = $_SESSION['cart'] ?? [];
@@ -42,7 +43,11 @@ $platform_fee = round($subtotal * 0.10 + $service_fee, 2);
 $merchant_amount = round($subtotal * 0.90, 2);
 $rider_amount = round($delivery_fee, 2);
 
-$user_id = 1; // temporary
+$user_id = cp3407_current_user_id($conn);
+if ($user_id <= 0) {
+    die("Unable to identify the logged-in user.");
+}
+
 $status = 'pending_payment';
 $payment_status = 'pending';
 

@@ -28,7 +28,6 @@ CREATE TABLE restaurants (
     address VARCHAR(255) NOT NULL,
     rating DECIMAL(2,1),
     opening_hours VARCHAR(100),
-    stripe_account_id VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
@@ -73,8 +72,12 @@ CREATE TABLE riders (
     name VARCHAR(100) NOT NULL,
     phone VARCHAR(20) NOT NULL,
     vehicle VARCHAR(50) NOT NULL,
+<<<<<<< HEAD
+    status VARCHAR(50) NOT NULL DEFAULT 'available',
+=======
     status VARCHAR(30) DEFAULT 'available',
     stripe_account_id VARCHAR(255) NULL,
+>>>>>>> eb4b297d8376740f5406c0df5bac05a34c92e884
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -248,6 +251,13 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 
+<<<<<<< HEAD
+SELECT o.id, o.total_price, o.status, o.created_at, r.name AS restaurant_name 
+FROM orders o 
+JOIN restaurants r ON o.restaurant_id = r.id 
+WHERE o.user_id = ? 
+ORDER BY o.created_at DESC;
+=======
 ALTER TABLE orders
 ADD COLUMN order_status VARCHAR(50) NOT NULL DEFAULT 'pending',
 ADD COLUMN estimated_delivery_time DATETIME NULL,
@@ -275,3 +285,4 @@ CREATE TABLE order_tracking (
     FOREIGN KEY (rider_id) REFERENCES riders(id) ON DELETE CASCADE
 );
 
+>>>>>>> eb4b297d8376740f5406c0df5bac05a34c92e884

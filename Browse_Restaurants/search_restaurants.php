@@ -68,8 +68,11 @@ if (isset($_GET['category']) && trim($_GET['category']) !== "") {
         NomNow
     </a>
 
-    <!-- Right: Logout -->
-    <div class="ms-auto">
+    <!-- Right: Actions -->
+    <div class="ms-auto d-flex gap-2">
+        <a href="/CP3407/Order_Placing/order_history.php" class="btn btn-outline-secondary">
+            Order History
+        </a>
         <a href="/CP3407/registration%20&%20login/logout.php" class="btn btn-outline-danger">
             Logout
         </a>
@@ -152,6 +155,9 @@ if (isset($_GET['category']) && trim($_GET['category']) !== "") {
 </div>
 
 </body>
+<<<<<<< HEAD
+</html>
+=======
 <footer class="site-footer">
     <div class="footer-top">
         <div class="footer-brand">
@@ -198,3 +204,4 @@ if (isset($_GET['category']) && trim($_GET['category']) !== "") {
     </div>
 </footer>
 </html>
+>>>>>>> eb4b297d8376740f5406c0df5bac05a34c92e884

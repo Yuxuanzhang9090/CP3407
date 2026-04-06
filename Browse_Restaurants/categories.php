@@ -50,8 +50,11 @@ if (!$categoriesResult) {
         NomNow
     </a>
 
-    <!-- Right: Logout -->
-    <div class="ms-auto">
+    <!-- Right: Actions -->
+    <div class="ms-auto d-flex gap-2">
+        <a href="/CP3407/Order_Placing/order_history.php" class="btn btn-outline-secondary">
+            Order History
+        </a>
         <a href="/CP3407/registration%20&%20login/logout.php" class="btn btn-outline-danger">
             Logout
         </a>

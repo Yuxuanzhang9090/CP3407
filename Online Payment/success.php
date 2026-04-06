@@ -453,9 +453,15 @@ $stripe_dashboard_this_payment = !empty($stripe_payment_id)
         </div>
 
         <div class="button-group">
+<<<<<<< HEAD
+            <a href="/CP3407/Order_Placing/order_history.php" class="btn">View Order History</a>
+
+            <a href="/CP3407/Browse_Restaurants/categories.php" class="btn">Back to Home</a>
+=======
             <a href="/CP3407/Order_Placing/track_order.php?order_id=<?php echo (int)$order_id; ?>" class="btn btn-primary">
                 Track Order
             </a>
+>>>>>>> eb4b297d8376740f5406c0df5bac05a34c92e884
 
             <a href="/CP3407/Browse_Restaurants/categories.php" class="btn btn-secondary">
                 Back to Home
