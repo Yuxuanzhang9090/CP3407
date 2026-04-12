@@ -1,6 +1,7 @@
 <?php
 session_start();
 date_default_timezone_set('Asia/Singapore');
+
 require_once(__DIR__ . "/../config.php");
 require_once(__DIR__ . "/../vendor/autoload.php");
 require_once(__DIR__ . "/../Tracking_Order/order_helpers.php");
@@ -26,12 +27,19 @@ if ($order_id <= 0) {
 $stripe_payment_id = $session->payment_intent ?? '';
 
 $stmt = $conn->prepare("
-    SELECT o.*, r.name AS restaurant_name, d.name AS rider_name
+    SELECT 
+        o.*, 
+        r.name AS restaurant_name, 
+        d.name AS rider_name
     FROM orders o
     JOIN restaurants r ON o.restaurant_id = r.id
     LEFT JOIN riders d ON o.rider_id = d.id
     WHERE o.id = ?
 ");
+if (!$stmt) {
+    die("Prepare failed (select order): " . $conn->error);
+}
+
 $stmt->bind_param("i", $order_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -43,30 +51,111 @@ if ($result->num_rows === 0) {
 $order = $result->fetch_assoc();
 $_SESSION['user_id'] = $order['user_id'];
 
+/*
+    如果订单还没标记为 paid，就更新：
+    - payment_status = paid
+    - order_status = confirmed
+    - stripe_payment_intent_id = 当前 Stripe payment intent
+    - status_updated_at = NOW()
+*/
 if (($order['payment_status'] ?? 'pending') !== 'paid') {
-    $split_status = 'completed';
-    $split_error = null;
-
     $stmt_update = $conn->prepare("
         UPDATE orders
         SET payment_status = 'paid',
-            status = 'paid',
-            order_status = 'pending',
-            status_updated_at = NOW(),
-            split_status = ?,
-            split_error = ?
+            order_status = 'confirmed',
+            stripe_payment_intent_id = ?,
+            status_updated_at = NOW()
         WHERE id = ?
     ");
-    $stmt_update->bind_param("ssi", $split_status, $split_error, $order_id);
-    $stmt_update->execute();
 
-    insertOrderStatusHistory($conn, $order_id, 'pending', 'system', 'Payment completed. Order placed successfully.');
+    if (!$stmt_update) {
+        die("Prepare failed (update orders): " . $conn->error);
+    }
 
+    $stmt_update->bind_param("si", $stripe_payment_id, $order_id);
+
+    if (!$stmt_update->execute()) {
+        die("Execute failed (update orders): " . $stmt_update->error);
+    }
+
+    /*
+        写一条状态历史
+    */
+    insertOrderStatusHistory(
+        $conn,
+        $order_id,
+        'confirmed',
+        'system',
+        'Payment completed. Order confirmed successfully.'
+    );
+
+    /*
+        如果 payments 表里还没有这笔记录，就插入一条
+    */
+    $stmt_check_payment = $conn->prepare("
+        SELECT id
+        FROM payments
+        WHERE order_id = ?
+        LIMIT 1
+    ");
+
+    if (!$stmt_check_payment) {
+        die("Prepare failed (check payments): " . $conn->error);
+    }
+
+    $stmt_check_payment->bind_param("i", $order_id);
+    $stmt_check_payment->execute();
+    $payment_result = $stmt_check_payment->get_result();
+
+    if ($payment_result->num_rows === 0) {
+        $payment_method = 'card';
+        $amount = (float)$order['total_price'];
+        $payment_status = 'paid';
+        $transaction_reference = !empty($stripe_payment_id) ? $stripe_payment_id : ('SIM_PAY_' . $order_id);
+
+        $stmt_insert_payment = $conn->prepare("
+            INSERT INTO payments (
+                order_id,
+                payment_method,
+                amount,
+                payment_status,
+                transaction_reference,
+                paid_at
+            ) VALUES (?, ?, ?, ?, ?, NOW())
+        ");
+
+        if (!$stmt_insert_payment) {
+            die("Prepare failed (insert payments): " . $conn->error);
+        }
+
+        $stmt_insert_payment->bind_param(
+            "isdss",
+            $order_id,
+            $payment_method,
+            $amount,
+            $payment_status,
+            $transaction_reference
+        );
+
+        if (!$stmt_insert_payment->execute()) {
+            die("Execute failed (insert payments): " . $stmt_insert_payment->error);
+        }
+    }
+
+    /*
+        如果 transfers 表里还没有这笔分账记录，就插入模拟记录
+        注意：这里只是你现在项目里的“模拟分账显示”，不是 Stripe 真分账
+    */
     $check = $conn->prepare("
         SELECT id
         FROM transfers
         WHERE order_id = ?
     ");
+
+    if (!$check) {
+        die("Prepare failed (check transfers): " . $conn->error);
+    }
+
     $check->bind_param("i", $order_id);
     $check->execute();
     $existing = $check->get_result();
@@ -78,10 +167,19 @@ if (($order['payment_status'] ?? 'pending') !== 'paid') {
                 (order_id, recipient_type, recipient_account_id, amount, stripe_transfer_id, status)
                 VALUES (?, 'restaurant', 'SIM_RESTAURANT', ?, ?, 'paid')
             ");
+
+            if (!$stmt_t1) {
+                die("Prepare failed (transfer restaurant): " . $conn->error);
+            }
+
             $fake_restaurant_transfer_id = "SIM_REST_" . $order_id;
             $merchant_amount = (float)$order['merchant_amount'];
+
             $stmt_t1->bind_param("ids", $order_id, $merchant_amount, $fake_restaurant_transfer_id);
-            $stmt_t1->execute();
+
+            if (!$stmt_t1->execute()) {
+                die("Execute failed (transfer restaurant): " . $stmt_t1->error);
+            }
         }
 
         if ((float)$order['rider_amount'] > 0) {
@@ -90,34 +188,65 @@ if (($order['payment_status'] ?? 'pending') !== 'paid') {
                 (order_id, recipient_type, recipient_account_id, amount, stripe_transfer_id, status)
                 VALUES (?, 'rider', 'SIM_RIDER', ?, ?, 'paid')
             ");
+
+            if (!$stmt_t2) {
+                die("Prepare failed (transfer rider): " . $conn->error);
+            }
+
             $fake_rider_transfer_id = "SIM_RIDER_" . $order_id;
             $rider_amount = (float)$order['rider_amount'];
+
             $stmt_t2->bind_param("ids", $order_id, $rider_amount, $fake_rider_transfer_id);
-            $stmt_t2->execute();
+
+            if (!$stmt_t2->execute()) {
+                die("Execute failed (transfer rider): " . $stmt_t2->error);
+            }
         }
     }
 
+    /*
+        刷新订单数据
+    */
     $stmt_refresh = $conn->prepare("
-        SELECT o.*, r.name AS restaurant_name, d.name AS rider_name
+        SELECT 
+            o.*, 
+            r.name AS restaurant_name, 
+            d.name AS rider_name
         FROM orders o
         JOIN restaurants r ON o.restaurant_id = r.id
         LEFT JOIN riders d ON o.rider_id = d.id
         WHERE o.id = ?
     ");
+
+    if (!$stmt_refresh) {
+        die("Prepare failed (refresh order): " . $conn->error);
+    }
+
     $stmt_refresh->bind_param("i", $order_id);
     $stmt_refresh->execute();
     $order = $stmt_refresh->get_result()->fetch_assoc();
 }
 
+/*
+    支付成功后清空购物车
+*/
 unset($_SESSION['cart']);
 unset($_SESSION['restaurant_id']);
 
+/*
+    读取 transfers 展示
+*/
 $stmt2 = $conn->prepare("
     SELECT recipient_type, amount, stripe_transfer_id, status
     FROM transfers
     WHERE order_id = ?
     ORDER BY id ASC
 ");
+
+if (!$stmt2) {
+    die("Prepare failed (select transfers): " . $conn->error);
+}
+
 $stmt2->bind_param("i", $order_id);
 $stmt2->execute();
 $transfer_result = $stmt2->get_result();
@@ -135,7 +264,6 @@ while ($row = $transfer_result->fetch_assoc()) {
 }
 
 $message = "Your payment was successful.";
-$split_status = $order['split_status'] ?? 'pending';
 $restaurant_amount_display = (float)($order['merchant_amount'] ?? 0);
 $rider_amount_display = (float)($order['rider_amount'] ?? 0);
 $platform_amount_display = (float)($order['platform_fee'] ?? 0);
@@ -410,11 +538,6 @@ $stripe_dashboard_this_payment = !empty($stripe_payment_id)
         <div class="info-box">
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="info-label">Split Status</span>
-                    <div class="info-value"><?php echo htmlspecialchars($split_status); ?></div>
-                </div>
-
-                <div class="info-item">
                     <span class="info-label">Platform Amount</span>
                     <div class="info-value">SGD <?php echo number_format($platform_amount_display, 2); ?></div>
                 </div>
@@ -427,6 +550,11 @@ $stripe_dashboard_this_payment = !empty($stripe_payment_id)
                 <div class="info-item">
                     <span class="info-label">Rider Amount</span>
                     <div class="info-value">SGD <?php echo number_format($rider_amount_display, 2); ?></div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Transfer Status</span>
+                    <div class="info-value">Completed</div>
                 </div>
 
                 <?php if ($restaurant_transfer_id !== ""): ?>
@@ -442,38 +570,29 @@ $stripe_dashboard_this_payment = !empty($stripe_payment_id)
                         <div class="info-value"><?php echo htmlspecialchars($rider_transfer_id); ?></div>
                     </div>
                 <?php endif; ?>
-
-                <?php if (!empty($order['split_error'])): ?>
-                    <div class="info-item full-span">
-                        <span class="info-label">Split Error</span>
-                        <div class="info-value"><?php echo htmlspecialchars($order['split_error']); ?></div>
-                    </div>
-                <?php endif; ?>
             </div>
         </div>
 
         <div class="button-group">
-<<<<<<< HEAD
-            <a href="/CP3407/Order_Placing/order_history.php" class="btn">View Order History</a>
-
-            <a href="/CP3407/Browse_Restaurants/categories.php" class="btn">Back to Home</a>
-=======
             <a href="/CP3407/Order_Placing/track_order.php?order_id=<?php echo (int)$order_id; ?>" class="btn btn-primary">
                 Track Order
             </a>
->>>>>>> eb4b297d8376740f5406c0df5bac05a34c92e884
 
-            <a href="/CP3407/Browse_Restaurants/categories.php" class="btn btn-secondary">
-                Back to Home
+            <a href="/CP3407/User/order_history.php" class="btn btn-secondary">
+                View Order History
             </a>
 
-            <a href="<?php echo htmlspecialchars($stripe_dashboard_all_payments); ?>" target="_blank" class="btn btn-outline">
-                View in Stripe Dashboard
+            <a href="/CP3407/Browse_Restaurants/categories.php" class="btn btn-outline">
+                Back to Home
             </a>
 
             <?php if (!empty($stripe_dashboard_this_payment)): ?>
                 <a href="<?php echo htmlspecialchars($stripe_dashboard_this_payment); ?>" target="_blank" class="btn btn-outline">
                     View This Payment
+                </a>
+            <?php else: ?>
+                <a href="<?php echo htmlspecialchars($stripe_dashboard_all_payments); ?>" target="_blank" class="btn btn-outline">
+                    View in Stripe Dashboard
                 </a>
             <?php endif; ?>
         </div>
