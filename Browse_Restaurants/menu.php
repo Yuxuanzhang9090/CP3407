@@ -9,7 +9,13 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$restaurant_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$restaurant_id = 0;
+
+if (isset($_GET['restaurant_id'])) {
+    $restaurant_id = (int)$_GET['restaurant_id'];
+} elseif (isset($_GET['id'])) {
+    $restaurant_id = (int)$_GET['id'];
+}
 
 if ($restaurant_id <= 0) {
     die("Invalid restaurant ID");
@@ -21,6 +27,11 @@ $_SESSION['restaurant_id'] = $restaurant_id;
 /* Get restaurant details */
 $sql_restaurant = "SELECT * FROM restaurants WHERE id = ?";
 $stmt = $conn->prepare($sql_restaurant);
+
+if (!$stmt) {
+    die("Prepare failed (restaurant): " . $conn->error);
+}
+
 $stmt->bind_param("i", $restaurant_id);
 $stmt->execute();
 $result_restaurant = $stmt->get_result();
@@ -34,6 +45,11 @@ $restaurant = $result_restaurant->fetch_assoc();
 /* Get menu items for this restaurant */
 $sql_menu = "SELECT * FROM menu_items WHERE restaurant_id = ? ORDER BY menu_category, id";
 $stmt_menu = $conn->prepare($sql_menu);
+
+if (!$stmt_menu) {
+    die("Prepare failed (menu): " . $conn->error);
+}
+
 $stmt_menu->bind_param("i", $restaurant_id);
 $stmt_menu->execute();
 $result_menu = $stmt_menu->get_result();
@@ -52,8 +68,10 @@ $cart_count = 0;
 $cart_total = 0;
 
 foreach ($cart as $cart_item) {
-    $cart_count += $cart_item['quantity'];
-    $cart_total += $cart_item['price'] * $cart_item['quantity'];
+    if (is_array($cart_item)) {
+        $cart_count += (int)($cart_item['quantity'] ?? 0);
+        $cart_total += (float)($cart_item['price'] ?? 0) * (int)($cart_item['quantity'] ?? 0);
+    }
 }
 
 function resolveMenuItemImage(string $storedPath, string $category): string
@@ -88,13 +106,8 @@ function resolveMenuItemImage(string $storedPath, string $category): string
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($restaurant['name']); ?> Menu</title>
 
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="/CP3407/registration%20%26%20login/style.css?v=<?php echo filemtime(__DIR__ . '/../registration & login/style.css'); ?>">
-
-    <!-- Icons -->
+    <link rel="stylesheet" href="/CP3407/registration%20%26%20login/style.css?v=<?php echo file_exists(__DIR__ . '/../registration & login/style.css') ? filemtime(__DIR__ . '/../registration & login/style.css') : time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
@@ -102,22 +115,19 @@ function resolveMenuItemImage(string $storedPath, string $category): string
 
 <div class="menu-page">
 
-    <!-- Banner -->
     <div class="menu-banner" style="background-image: url('<?php echo htmlspecialchars($restaurant['image'] ?? '../images/banner_food.jpg'); ?>');">
         <div class="menu-banner-overlay"></div>
 
-        <!-- Cart icon scrolls to cart bar -->
         <a href="cart.php" class="floating-cart-link">
             <i class="fa-solid fa-cart-shopping"></i>
             <?php echo $cart_count; ?>
         </a>
     </div>
 
-    <!-- Restaurant info -->
     <div class="menu-info-card">
         <div class="menu-header-flex">
             <div class="menu-logo">
-              <?php echo mb_substr($restaurant['name'], 0, 2, 'UTF-8'); ?>
+                <?php echo mb_substr($restaurant['name'], 0, 2, 'UTF-8'); ?>
             </div>
         </div>
 
@@ -137,7 +147,6 @@ function resolveMenuItemImage(string $storedPath, string $category): string
         </div>
     </div>
 
-    <!-- Tabs -->
     <?php if (!empty($categories)) { ?>
         <div class="menu-tabs">
             <?php foreach ($categories as $index => $category) { ?>
@@ -148,7 +157,6 @@ function resolveMenuItemImage(string $storedPath, string $category): string
         </div>
     <?php } ?>
 
-    <!-- Menu sections -->
     <div class="menu-sections">
         <?php if (!empty($menu)) { ?>
             <?php foreach ($menu as $category => $items): ?>
@@ -177,10 +185,10 @@ function resolveMenuItemImage(string $storedPath, string $category): string
 
                                 <div class="dish-price-row">
                                     <div class="dish-price">
-                                        <?php echo number_format($item['price'], 1); ?>
+                                        <?php echo number_format((float)$item['price'], 1); ?>
                                     </div>
 
-                                    <button class="add-cart-btn" data-id="<?php echo $item['id']; ?>">
+                                    <button class="add-cart-btn" data-id="<?php echo (int)$item['id']; ?>">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
                                 </div>
@@ -188,14 +196,12 @@ function resolveMenuItemImage(string $storedPath, string $category): string
                         <?php endforeach; ?>
                     </div>
                 </div>
-
             <?php endforeach; ?>
         <?php } else { ?>
             <p class="menu-empty">No menu items found for this restaurant.</p>
         <?php } ?>
     </div>
 
-    <!-- Cart bar -->
     <div class="cart-bar show" id="cartBar">
         <div class="cart-summary">
             <i class="fa-solid fa-bag-shopping"></i>
@@ -208,14 +214,12 @@ function resolveMenuItemImage(string $storedPath, string $category): string
         </form>
     </div>
 
-    <!-- Rate and Reviews Section -->
     <div class="container mt-5">
         <h3>Rate & Review</h3>
 
         <form action="/CP3407/Rate_and_Review_Restaurants/submit_review.php" method="POST">
-            <input type="hidden" name="restaurant_id" value="<?php echo $restaurant_id; ?>">
+            <input type="hidden" name="restaurant_id" value="<?php echo (int)$restaurant_id; ?>">
 
-            <!-- Rating -->
             <div class="mb-3">
                 <label class="form-label">Rating (optional)</label>
                 <select name="rating" class="form-select">
@@ -228,7 +232,6 @@ function resolveMenuItemImage(string $storedPath, string $category): string
                 </select>
             </div>
 
-            <!-- Review -->
             <div class="mb-3">
                 <label class="form-label">Review (optional)</label>
                 <textarea name="review" class="form-control" rows="3"></textarea>
@@ -238,9 +241,15 @@ function resolveMenuItemImage(string $storedPath, string $category): string
                 Submit Review
             </button>
         </form>
+
         <?php
         $sql_reviews = "SELECT * FROM reviews WHERE restaurant_id = ? ORDER BY created_at DESC";
         $stmt_reviews = $conn->prepare($sql_reviews);
+
+        if (!$stmt_reviews) {
+            die("Prepare failed (reviews): " . $conn->error);
+        }
+
         $stmt_reviews->bind_param("i", $restaurant_id);
         $stmt_reviews->execute();
         $result_reviews = $stmt_reviews->get_result();
@@ -248,54 +257,59 @@ function resolveMenuItemImage(string $storedPath, string $category): string
 
         <div class="container mt-4">
             <div class="customer-reviews-section mt-4">
-            <h3 class="section-title mb-3">Customer Reviews</h3>
+                <h3 class="section-title mb-3">Customer Reviews</h3>
 
-            <?php
-            // Query the reviews table
-            $reviewSql = "SELECT user_email, rating, review, created_at 
-                          FROM reviews 
-                          WHERE restaurant_id = ? 
-                          ORDER BY created_at DESC";
-
-            $stmt = $conn->prepare($reviewSql);
-            $stmt->bind_param("i", $restaurant_id);
-            $stmt->execute();
-            $reviewResult = $stmt->get_result();
-            
-            if ($reviewResult->num_rows > 0):
-                while ($row = $reviewResult->fetch_assoc()):
-                ?>
-                <div class="review-card mb-3 p-3 border rounded shadow-sm bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <strong class="user-id-text"><?php echo htmlspecialchars($row['user_email']); ?></strong>
-                        <span class="review-date text-muted small"><?php echo date('d M Y', strtotime($row['created_at'])); ?></span>
-                    </div>
-
-                    <div class="review-stars my-1">
-                        <?php 
-                        // Display stars based on the rating
-                        for ($i = 1; $i <= 5; $i++) {
-                            if ($i <= $row['rating']) {
-                                echo '<i class="fa-solid fa-star text-warning"></i>';
-                            } else {
-                                echo '<i class="fa-regular fa-star text-secondary"></i>';
-                            }
-                        }
-                        ?>
-                    </div>
-
-                    <p class="review-text mt-2 mb-0">
-                       <?php echo nl2br(htmlspecialchars($row['review'])); ?>
-                    </p>
-                </div>
                 <?php
-                endwhile;
-            else:
-                echo '<p class="text-muted">No reviews yet. Be the first to leave one!</p>';
-            endif;
-            ?>
+                $reviewSql = "SELECT user_email, rating, review, created_at 
+                              FROM reviews 
+                              WHERE restaurant_id = ? 
+                              ORDER BY created_at DESC";
+
+                $stmtReviewList = $conn->prepare($reviewSql);
+
+                if (!$stmtReviewList) {
+                    die("Prepare failed (review list): " . $conn->error);
+                }
+
+                $stmtReviewList->bind_param("i", $restaurant_id);
+                $stmtReviewList->execute();
+                $reviewResult = $stmtReviewList->get_result();
+
+                if ($reviewResult->num_rows > 0):
+                    while ($row = $reviewResult->fetch_assoc()):
+                ?>
+                    <div class="review-card mb-3 p-3 border rounded shadow-sm bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong class="user-id-text"><?php echo htmlspecialchars($row['user_email']); ?></strong>
+                            <span class="review-date text-muted small"><?php echo date('d M Y', strtotime($row['created_at'])); ?></span>
+                        </div>
+
+                        <div class="review-stars my-1">
+                            <?php
+                            for ($i = 1; $i <= 5; $i++) {
+                                if ($i <= (int)$row['rating']) {
+                                    echo '<i class="fa-solid fa-star text-warning"></i>';
+                                } else {
+                                    echo '<i class="fa-regular fa-star text-secondary"></i>';
+                                }
+                            }
+                            ?>
+                        </div>
+
+                        <p class="review-text mt-2 mb-0">
+                            <?php echo nl2br(htmlspecialchars($row['review'])); ?>
+                        </p>
+                    </div>
+                <?php
+                    endwhile;
+                else:
+                    echo '<p class="text-muted">No reviews yet. Be the first to leave one!</p>';
+                endif;
+                ?>
+            </div>
         </div>
-    </div> </div> ```
+    </div>
+
 </div>
 
 <script>
