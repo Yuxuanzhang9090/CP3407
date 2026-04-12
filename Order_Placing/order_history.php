@@ -1,92 +1,323 @@
+<?php
+session_start();
+require_once("../config.php");
+require_once("../Order_Placing/order_history_helpers.php");
+
+if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] <= 0) {
+    header("Location: ../registration%20&%20login/login.php");
+    exit;
+}
+
+$user_id = (int)$_SESSION['user_id'];
+
+$sql = "
+    SELECT 
+        o.id,
+        o.total_price,
+        o.order_status,
+        o.payment_status,
+        o.created_at,
+        o.restaurant_id,
+        r.name AS restaurant_name,
+        COUNT(oi.id) AS total_items
+    FROM orders o
+    INNER JOIN restaurants r ON o.restaurant_id = r.id
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+    WHERE o.user_id = ?
+    GROUP BY o.id, o.total_price, o.order_status, o.payment_status, o.created_at, o.restaurant_id, r.name
+    ORDER BY o.created_at DESC
+";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$orders = [];
+while ($row = $result->fetch_assoc()) {
+    $orders[] = $row;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Order History</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="/CP3407/registration%20%26%20login/style.css?v=1775444152">
+    <title>Order History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff8f3;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 25px;
+            color: #222;
+        }
+
+        .top-actions {
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 10px 16px;
+            background: #f4c7ab;
+            color: #222;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .back-btn:hover {
+            background: #efb894;
+        }
+
+        .empty-box {
+            background: #fff;
+            border-radius: 14px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+
+        .empty-box h2 {
+            margin-top: 0;
+            color: #444;
+        }
+
+        .empty-box p {
+            color: #666;
+        }
+
+        .browse-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 18px;
+            background: #ff9f6e;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .browse-btn:hover {
+            background: #f58e58;
+        }
+
+        .orders-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .order-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .order-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .order-left h3 {
+            margin: 0 0 8px;
+            color: #222;
+        }
+
+        .order-meta {
+            color: #666;
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .order-right {
+            text-align: right;
+        }
+
+        .price {
+            font-size: 22px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 10px;
+        }
+
+        .badges {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .status-delivered {
+            background: #d8f5dc;
+            color: #1b7f35;
+        }
+
+        .status-cancelled {
+            background: #ffe0e0;
+            color: #b42318;
+        }
+
+        .status-progress {
+            background: #e0edff;
+            color: #1d4ed8;
+        }
+
+        .status-preparing {
+            background: #fff1d6;
+            color: #b26a00;
+        }
+
+        .status-pending {
+            background: #eee;
+            color: #555;
+        }
+
+        .payment-paid {
+            background: #daf4e3;
+            color: #177245;
+        }
+
+        .payment-failed {
+            background: #ffe0e0;
+            color: #b42318;
+        }
+
+        .payment-refunded {
+            background: #ede3ff;
+            color: #6b21a8;
+        }
+
+        .payment-pending {
+            background: #eee;
+            color: #555;
+        }
+
+        .order-actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 11px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-details {
+            background: #ffb58a;
+            color: #fff;
+        }
+
+        .btn-details:hover {
+            background: #f59c6a;
+        }
+
+        .btn-reorder {
+            background: #f4c7ab;
+            color: #222;
+        }
+
+        .btn-reorder:hover {
+            background: #ebb48f;
+        }
+
+        @media (max-width: 768px) {
+            .order-right {
+                text-align: left;
+            }
+
+            .badges {
+                justify-content: flex-start;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div class="history-shell">
-    <div class="history-header">
-        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
-            <div>
-                <span class="checkout-badge">Order Timeline</span>
-                <h1 class="checkout-title mb-2">Your Order History</h1>
-                <p class="checkout-subtitle mb-0">
-                    Signed in as russ@gmail.com. Review your previous food orders, payment status, and item breakdowns.
-                </p>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a href="/CP3407/Browse_Restaurants/categories.php" class="btn btn-outline-dark">
-                    <i class="fa-solid fa-house me-2"></i>Browse Restaurants
-                </a>
-            </div>
-        </div>
+<div class="container">
+    <div class="top-actions">
+        <a href="../Browse_Restaurants/categories.php" class="back-btn">← Back to Restaurants</a>
     </div>
 
-                        <div class="card history-card">
-                <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-4 align-items-lg-center">
-                    <div>
-                        <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
-                            <h3 class="h4 mb-0">McDonald&#039;s</h3>
-                            <span class="text-muted">#32</span>
+    <h1>Your Order History</h1>
+
+    <?php if (empty($orders)): ?>
+        <div class="empty-box">
+            <h2>No orders yet</h2>
+            <p>You have not placed any orders yet. Start exploring restaurants and place your first order.</p>
+            <a href="../Browse_Restaurants/categories.php" class="browse-btn">Browse Restaurants</a>
+        </div>
+    <?php else: ?>
+        <div class="orders-grid">
+            <?php foreach ($orders as $order): ?>
+                <div class="order-card">
+                    <div class="order-top">
+                        <div class="order-left">
+                            <h3>Order #<?php echo (int)$order['id']; ?> - <?php echo htmlspecialchars($order['restaurant_name']); ?></h3>
+                            <div class="order-meta">
+                                <div><strong>Date:</strong> <?php echo date("d M Y, h:i A", strtotime($order['created_at'])); ?></div>
+                                <div><strong>Items:</strong> <?php echo (int)$order['total_items']; ?></div>
+                                <div><strong>Restaurant ID:</strong> <?php echo (int)$order['restaurant_id']; ?></div>
+                            </div>
                         </div>
-                        <div class="history-total">SGD 21.19</div>
-                        <div class="history-meta">
-                            <span><i class="fa-regular fa-clock me-1"></i>06 Apr 2026, 11:11 AM</span>
-                            <span><i class="fa-solid fa-bag-shopping me-1"></i>2 item(s)</span>
-                            <span><i class="fa-solid fa-location-dot me-1"></i>111</span>
+
+                        <div class="order-right">
+                            <div class="price">$<?php echo number_format((float)$order['total_price'], 2); ?></div>
+                            <div class="badges">
+                                <span class="badge <?php echo getStatusBadgeClass($order['order_status']); ?>">
+                                    <?php echo htmlspecialchars(formatOrderStatus($order['order_status'])); ?>
+                                </span>
+                                <span class="badge <?php echo getPaymentBadgeClass($order['payment_status']); ?>">
+                                    Payment: <?php echo htmlspecialchars(formatPaymentStatus($order['payment_status'])); ?>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div class="history-actions text-lg-end">
-                        <div class="status-stack">
-                            <span class="badge bg-warning text-dark status-badge">
-                                Order: Pending Payment                            </span>
-                            <span class="badge bg-warning text-dark status-badge">
-                                Payment: Pending                            </span>
-                            <span class="badge bg-warning text-dark status-badge">
-                                Split: Pending                            </span>
-                        </div>
-                        <a href="/CP3407/Order_Placing/order_details.php?id=32" class="btn btn-primary">
-                            <i class="fa-solid fa-receipt me-2"></i>View Details
+
+                    <div class="order-actions">
+                        <a class="btn btn-details" href="order_details.php?order_id=<?php echo (int)$order['id']; ?>">
+                            View Details
+                        </a>
+                        <a class="btn btn-reorder" href="reorder.php?order_id=<?php echo (int)$order['id']; ?>"
+                           onclick="return confirm('Do you want to reorder these items? This will replace your current cart if it belongs to another restaurant.');">
+                            Reorder
                         </a>
                     </div>
                 </div>
-            </div>
-                    <div class="card history-card">
-                <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-4 align-items-lg-center">
-                    <div>
-                        <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
-                            <h3 class="h4 mb-0">McDonald&#039;s</h3>
-                            <span class="text-muted">#31</span>
-                        </div>
-                        <div class="history-total">SGD 23.09</div>
-                        <div class="history-meta">
-                            <span><i class="fa-regular fa-clock me-1"></i>05 Apr 2026, 11:59 PM</span>
-                            <span><i class="fa-solid fa-bag-shopping me-1"></i>4 item(s)</span>
-                            <span><i class="fa-solid fa-location-dot me-1"></i>blk 234</span>
-                        </div>
-                    </div>
-                    <div class="history-actions text-lg-end">
-                        <div class="status-stack">
-                            <span class="badge bg-success status-badge">
-                                Order: Paid                            </span>
-                            <span class="badge bg-success status-badge">
-                                Payment: Paid                            </span>
-                            <span class="badge bg-success status-badge">
-                                Split: Completed                            </span>
-                        </div>
-                        <a href="/CP3407/Order_Placing/order_details.php?id=31" class="btn btn-primary">
-                            <i class="fa-solid fa-receipt me-2"></i>View Details
-                        </a>
-                    </div>
-                </div>
-            </div>
-            </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+</div>
 
 </body>
 </html>
