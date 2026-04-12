@@ -4,6 +4,15 @@ CREATE DATABASE food_delivery;
 -- use the database of food_delivery
 USE food_delivery;
 
+CREATE TABLE IF NOT EXISTS users (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(256) NOT NULL,
+    password VARCHAR(256) NOT NULL,
+    username VARCHAR(100),
+    phone VARCHAR(30),
+    address VARCHAR(255)
+);
+
 -- create categories table
 CREATE TABLE categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -72,12 +81,8 @@ CREATE TABLE riders (
     name VARCHAR(100) NOT NULL,
     phone VARCHAR(20) NOT NULL,
     vehicle VARCHAR(50) NOT NULL,
-<<<<<<< HEAD
-    status VARCHAR(50) NOT NULL DEFAULT 'available',
-=======
     status VARCHAR(30) DEFAULT 'available',
     stripe_account_id VARCHAR(255) NULL,
->>>>>>> eb4b297d8376740f5406c0df5bac05a34c92e884
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -127,25 +132,25 @@ INSERT INTO menu_items (restaurant_id, menu_category, name, description, price, 
 
 CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    restaurant_id INT,
+    user_id INT NOT NULL,
+    restaurant_id INT NOT NULL,
     rider_id INT NULL,
+    subtotal DECIMAL(10,2) DEFAULT 0.00,
+    delivery_fee DECIMAL(10,2) DEFAULT 0.00,
+    service_fee DECIMAL(10,2) DEFAULT 0.00,
     total_price DECIMAL(10,2),
     phone VARCHAR(50),
     delivery_address VARCHAR(255),
     notes TEXT,
-    status VARCHAR(50) DEFAULT 'pending',
     payment_status VARCHAR(50) DEFAULT 'pending',
+    order_status VARCHAR(50) DEFAULT 'pending',
     stripe_checkout_session_id VARCHAR(255),
     stripe_payment_intent_id VARCHAR(255),
-    subtotal DECIMAL(10,2) DEFAULT 0.00,
-    delivery_fee DECIMAL(10,2) DEFAULT 0.00,
-    service_fee DECIMAL(10,2) DEFAULT 0.00,
-    platform_fee DECIMAL(10,2) DEFAULT 0.00,
-    merchant_amount DECIMAL(10,2) DEFAULT 0.00,
-    rider_amount DECIMAL(10,2) DEFAULT 0.00,
-    is_paid INT DEFAULT 0,
+    estimated_delivery_time DATETIME NULL,
+    status_updated_at DATETIME NULL,
+    delivered_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(Id) ON DELETE CASCADE,
     FOREIGN KEY (restaurant_id) REFERENCES restaurants(id),
     FOREIGN KEY (rider_id) REFERENCES riders(id)
 );
@@ -161,6 +166,18 @@ CREATE TABLE order_items (
     FOREIGN KEY (menu_item_id) REFERENCES menu_items(id)
 );
 
+CREATE TABLE payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    payment_method VARCHAR(50) DEFAULT 'card',
+    amount DECIMAL(10,2),
+    payment_status VARCHAR(50),
+    transaction_reference VARCHAR(255),
+    paid_at DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
 CREATE TABLE transfers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
@@ -171,10 +188,6 @@ CREATE TABLE transfers (
     status VARCHAR(50) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-ALTER TABLE orders
-ADD COLUMN split_status VARCHAR(50) DEFAULT 'pending',
-ADD COLUMN split_error TEXT NULL;
 
 CREATE TABLE reviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -251,19 +264,6 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 
-<<<<<<< HEAD
-SELECT o.id, o.total_price, o.status, o.created_at, r.name AS restaurant_name 
-FROM orders o 
-JOIN restaurants r ON o.restaurant_id = r.id 
-WHERE o.user_id = ? 
-ORDER BY o.created_at DESC;
-=======
-ALTER TABLE orders
-ADD COLUMN order_status VARCHAR(50) NOT NULL DEFAULT 'pending',
-ADD COLUMN estimated_delivery_time DATETIME NULL,
-ADD COLUMN status_updated_at DATETIME NULL,
-ADD COLUMN delivered_at DATETIME NULL;
-
 CREATE TABLE order_status_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
@@ -285,4 +285,29 @@ CREATE TABLE order_tracking (
     FOREIGN KEY (rider_id) REFERENCES riders(id) ON DELETE CASCADE
 );
 
->>>>>>> eb4b297d8376740f5406c0df5bac05a34c92e884
+ALTER TABLE orders
+ADD COLUMN platform_fee DECIMAL(10,2) DEFAULT 0.00;
+ALTER TABLE orders
+ADD COLUMN merchant_amount DECIMAL(10,2) DEFAULT 0.00,
+ADD COLUMN rider_amount DECIMAL(10,2) DEFAULT 0.00;
+
+ALTER TABLE restaurants
+ADD COLUMN stripe_account_id VARCHAR(255) NULL AFTER opening_hours;
+
+UPDATE restaurants
+SET stripe_account_id = 'acct_test_restaurant_001'
+WHERE id = 1;
+
+UPDATE restaurants
+SET stripe_account_id = 'acct_test_restaurant_002'
+WHERE id = 2;
+
+UPDATE restaurants
+SET stripe_account_id = 'acct_test_restaurant_003'
+WHERE id = 3;
+
+UPDATE riders SET stripe_account_id = 'acct_test_rider_001' WHERE id = 1;
+UPDATE riders SET stripe_account_id = 'acct_test_rider_002' WHERE id = 2;
+UPDATE riders SET stripe_account_id = 'acct_test_rider_003' WHERE id = 3;
+UPDATE riders SET stripe_account_id = 'acct_test_rider_004' WHERE id = 4;
+UPDATE riders SET stripe_account_id = 'acct_test_rider_005' WHERE id = 5;
