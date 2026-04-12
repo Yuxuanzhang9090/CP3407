@@ -1,109 +1,111 @@
 <?php
 session_start();
-require_once(__DIR__ . "/../config.php");
+require_once("../config.php");
+require_once("../Order_Placing/order_history_helpers.php");
 
-cp3407_require_login();
-$user_id = cp3407_current_user_id($conn);
-
-if ($user_id <= 0) {
-    die("Unable to identify the logged-in user.");
+if (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] <= 0) {
+    header("Location: ../Browse_Restaurants/login.php");
+    exit;
 }
 
-$order_id = (int)($_GET['id'] ?? 0);
+$user_id = (int)$_SESSION['user_id'];
+$order_id = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
+
 if ($order_id <= 0) {
     die("Invalid order ID.");
 }
 
-$stmt = $conn->prepare("
-    SELECT
+$sqlOrder = "
+    SELECT 
         o.*,
         r.name AS restaurant_name,
         r.address AS restaurant_address,
-        d.name AS rider_name,
-        d.phone AS rider_phone,
-        d.vehicle AS rider_vehicle
+        rd.name AS rider_name,
+        rd.phone AS rider_phone
     FROM orders o
-    JOIN restaurants r ON o.restaurant_id = r.id
-    LEFT JOIN riders d ON o.rider_id = d.id
+    INNER JOIN restaurants r ON o.restaurant_id = r.id
+    LEFT JOIN riders rd ON o.rider_id = rd.id
     WHERE o.id = ? AND o.user_id = ?
     LIMIT 1
-");
-$stmt->bind_param("ii", $order_id, $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$order = $result ? $result->fetch_assoc() : null;
+";
+$stmtOrder = $conn->prepare($sqlOrder);
 
-if (!$order) {
-    die("Order not found.");
+if (!$stmtOrder) {
+    die("Prepare failed (order): " . $conn->error);
 }
 
-$item_stmt = $conn->prepare("
-    SELECT item_name, quantity, price
+$stmtOrder->bind_param("ii", $order_id, $user_id);
+$stmtOrder->execute();
+$orderResult = $stmtOrder->get_result();
+$order = $orderResult->fetch_assoc();
+
+if (!$order) {
+    die("Order not found or access denied.");
+}
+
+$sqlItems = "
+    SELECT 
+        id,
+        menu_item_id,
+        item_name,
+        price,
+        quantity
     FROM order_items
     WHERE order_id = ?
     ORDER BY id ASC
-");
-$item_stmt->bind_param("i", $order_id);
-$item_stmt->execute();
-$items = $item_stmt->get_result();
+";
+$stmtItems = $conn->prepare($sqlItems);
 
-$transfer_stmt = $conn->prepare("
-    SELECT recipient_type, amount, stripe_transfer_id, status
-    FROM transfers
+if (!$stmtItems) {
+    die("Prepare failed (order items): " . $conn->error);
+}
+
+$stmtItems->bind_param("i", $order_id);
+$stmtItems->execute();
+$itemsResult = $stmtItems->get_result();
+
+$orderItems = [];
+while ($row = $itemsResult->fetch_assoc()) {
+    $orderItems[] = $row;
+}
+
+$sqlPayment = "
+    SELECT *
+    FROM payments
     WHERE order_id = ?
-    ORDER BY id ASC
-");
-$transfer_stmt->bind_param("i", $order_id);
-$transfer_stmt->execute();
-$transfers = $transfer_stmt->get_result();
+    ORDER BY id DESC
+    LIMIT 1
+";
+$stmtPayment = $conn->prepare($sqlPayment);
 
-function detailBadgeClass(string $status): string
-{
-    return match ($status) {
-        'paid', 'completed' => 'success',
-        'pending_payment', 'pending' => 'warning text-dark',
-        'failed', 'cancelled' => 'danger',
-        default => 'secondary',
-    };
+if (!$stmtPayment) {
+    die("Prepare failed (payment): " . $conn->error);
 }
 
-function detailLabel(string $value): string
-{
-    return ucwords(str_replace('_', ' ', $value));
+$stmtPayment->bind_param("i", $order_id);
+$stmtPayment->execute();
+$paymentResult = $stmtPayment->get_result();
+$payment = $paymentResult->fetch_assoc();
+
+$sqlHistory = "
+    SELECT status, notes, updated_by, created_at
+    FROM order_status_history
+    WHERE order_id = ?
+    ORDER BY created_at ASC
+";
+$stmtHistory = $conn->prepare($sqlHistory);
+
+if (!$stmtHistory) {
+    die("Prepare failed (history): " . $conn->error);
 }
 
-function detailOrderStatusText(string $status): string
-{
-    return match ($status) {
-        'paid' => 'Order: Confirmed',
-        'pending_payment' => 'Order: Waiting for Payment',
-        'pending' => 'Order: Pending',
-        'cancelled' => 'Order: Cancelled',
-        'failed' => 'Order: Failed',
-        default => 'Order: ' . detailLabel($status),
-    };
-}
+$stmtHistory->bind_param("i", $order_id);
+$stmtHistory->execute();
+$historyResult = $stmtHistory->get_result();
 
-function detailPaymentStatusText(string $status): string
-{
-    return match ($status) {
-        'paid' => 'Payment: Paid',
-        'pending' => 'Payment: Pending',
-        'failed' => 'Payment: Failed',
-        'cancelled' => 'Payment: Cancelled',
-        default => 'Payment: ' . detailLabel($status),
-    };
-}
-
-function detailSplitStatusText(string $status): string
-{
-    return match ($status) {
-        'completed' => 'Payout: Completed',
-        'pending' => 'Payout: Pending',
-        'partial_failed' => 'Payout: Partially Completed',
-        'failed' => 'Payout: Failed',
-        default => 'Payout: ' . detailLabel($status),
-    };
+$statusHistory = [];
+while ($row = $historyResult->fetch_assoc()) {
+    $statusHistory[] = $row;
 }
 ?>
 <!DOCTYPE html>
@@ -112,228 +114,289 @@ function detailSplitStatusText(string $status): string
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Details</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="/CP3407/registration%20%26%20login/style.css?v=<?php echo filemtime(__DIR__ . '/../registration & login/style.css'); ?>">
     <style>
         body {
-            background: linear-gradient(rgba(255,255,255,0.92), rgba(255,255,255,0.92)),
-                        url("/CP3407/registration%20%26%20login/online%20food.jpg");
-            background-size: cover;
-            background-attachment: fixed;
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #fff8f3;
+            margin: 0;
+            padding: 0;
+            color: #333;
         }
 
-        .details-shell {
-            max-width: 1120px;
-            margin: 56px auto 90px;
-            padding: 0 16px;
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
         }
 
-        .details-card {
-            background: #ffffff;
-            border: none;
-            border-radius: 24px;
-            box-shadow: 0 14px 36px rgba(0,0,0,0.08);
-            overflow: hidden;
+        .top-actions {
+            margin-bottom: 20px;
         }
 
-        .summary-box {
-            border-radius: 18px;
-            background: #f8fafc;
-            padding: 18px 20px;
-            border: 1px solid rgba(226, 232, 240, 0.9);
+        .back-btn {
+            display: inline-block;
+            padding: 10px 16px;
+            background: #f4c7ab;
+            color: #222;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
         }
 
-        .details-header {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin-bottom: 24px;
+        .back-btn:hover {
+            background: #efb894;
         }
 
-        .details-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: flex-start;
+        h1 {
+            margin-bottom: 25px;
         }
 
-        .details-actions .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+        .grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 22px;
+            color: #222;
+        }
+
+        .info-row {
+            margin-bottom: 12px;
+            line-height: 1.7;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .status-delivered {
+            background: #d8f5dc;
+            color: #1b7f35;
+        }
+
+        .status-cancelled {
+            background: #ffe0e0;
+            color: #b42318;
+        }
+
+        .status-progress {
+            background: #e0edff;
+            color: #1d4ed8;
+        }
+
+        .status-preparing {
+            background: #fff1d6;
+            color: #b26a00;
+        }
+
+        .status-pending {
+            background: #eee;
+            color: #555;
+        }
+
+        .payment-paid {
+            background: #daf4e3;
+            color: #177245;
+        }
+
+        .payment-failed {
+            background: #ffe0e0;
+            color: #b42318;
+        }
+
+        .payment-refunded {
+            background: #ede3ff;
+            color: #6b21a8;
+        }
+
+        .payment-pending {
+            background: #eee;
+            color: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #fff1e8;
+        }
+
+        .total-line {
+            text-align: right;
+            margin-top: 16px;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
+        .history-item {
+            border-left: 4px solid #ffb58a;
+            padding-left: 14px;
+            margin-bottom: 16px;
+        }
+
+        .history-item strong {
+            color: #222;
+        }
+
+        .reorder-btn {
+            display: inline-block;
+            margin-top: 15px;
             padding: 12px 18px;
-            line-height: 1.2;
-            border-radius: 14px;
-            white-space: nowrap;
-            min-height: auto;
+            background: #ff9f6e;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
         }
 
-        .summary-label {
-            display: block;
-            font-size: 0.9rem;
-            color: #64748b;
-            margin-bottom: 6px;
+        .reorder-btn:hover {
+            background: #f58e58;
         }
 
-        .summary-value {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .info-list p:last-child,
-        .table td:last-child,
-        .table th:last-child {
-            margin-bottom: 0;
-        }
-
-        @media (min-width: 992px) {
-            .details-header {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: flex-start;
-            }
-
-            .details-actions {
-                justify-content: flex-end;
-                flex: 0 0 auto;
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
 
-<div class="details-shell">
-    <div class="details-card p-4 p-lg-5">
-        <div class="details-header">
-            <div>
-                <span class="checkout-badge">Order Details</span>
-                <h1 class="checkout-title mb-2">Order #<?php echo (int)$order['id']; ?></h1>
-                <p class="checkout-subtitle mb-0">
-                    Placed with <?php echo htmlspecialchars($order['restaurant_name']); ?> on
-                    <?php echo date('d M Y, h:i A', strtotime($order['created_at'])); ?>.
-                </p>
-            </div>
-            <div class="details-actions">
-                <a href="<?php echo $app_url; ?>/Order_Placing/order_history.php" class="btn btn-outline-dark">
-                    <i class="fa-solid fa-arrow-left me-2"></i>Back to History
+<div class="container">
+    <div class="top-actions">
+        <a href="order_history.php" class="back-btn">← Back to Order History</a>
+    </div>
+
+    <h1>Order Details - #<?php echo (int)$order['id']; ?></h1>
+
+    <div class="grid">
+        <div>
+            <div class="card">
+                <h2>Order Information</h2>
+
+                <div class="info-row"><strong>Restaurant:</strong> <?php echo htmlspecialchars($order['restaurant_name']); ?></div>
+                <div class="info-row"><strong>Restaurant Address:</strong> <?php echo htmlspecialchars($order['restaurant_address'] ?? 'N/A'); ?></div>
+                <div class="info-row"><strong>Order Date:</strong> <?php echo date("d M Y, h:i A", strtotime($order['created_at'])); ?></div>
+                <div class="info-row"><strong>Delivery Address:</strong> <?php echo htmlspecialchars($order['delivery_address'] ?? 'N/A'); ?></div>
+                <div class="info-row"><strong>Phone:</strong> <?php echo htmlspecialchars($order['phone'] ?? 'N/A'); ?></div>
+                <div class="info-row"><strong>Notes:</strong> <?php echo htmlspecialchars($order['notes'] ?? 'None'); ?></div>
+
+                <div class="info-row">
+                    <strong>Status:</strong>
+                    <span class="badge <?php echo getStatusBadgeClass($order['order_status']); ?>">
+                        <?php echo htmlspecialchars(formatOrderStatus($order['order_status'])); ?>
+                    </span>
+                </div>
+
+                <div class="info-row">
+                    <strong>Payment Status:</strong>
+                    <span class="badge <?php echo getPaymentBadgeClass($order['payment_status']); ?>">
+                        <?php echo htmlspecialchars(formatPaymentStatus($order['payment_status'])); ?>
+                    </span>
+                </div>
+
+                <?php if (!empty($order['rider_name'])): ?>
+                    <div class="info-row"><strong>Rider:</strong> <?php echo htmlspecialchars($order['rider_name']); ?></div>
+                    <div class="info-row"><strong>Rider Phone:</strong> <?php echo htmlspecialchars($order['rider_phone'] ?? 'N/A'); ?></div>
+                <?php endif; ?>
+
+                <a class="reorder-btn"
+                   href="reorder.php?order_id=<?php echo (int)$order['id']; ?>"
+                   onclick="return confirm('Are you sure ordering this item again?');">
+                   One more order
                 </a>
-                <a href="<?php echo $app_url; ?>/Browse_Restaurants/categories.php" class="btn btn-primary">
-                    <i class="fa-solid fa-house me-2"></i>Browse Restaurants
-                </a>
             </div>
-        </div>
 
-        <div class="d-flex flex-wrap gap-2 mb-4">
-            <span class="badge bg-<?php echo detailBadgeClass((string)$order['status']); ?> px-3 py-2">
-                <?php echo htmlspecialchars(detailOrderStatusText((string)$order['status'])); ?>
-            </span>
-            <span class="badge bg-<?php echo detailBadgeClass((string)$order['payment_status']); ?> px-3 py-2">
-                <?php echo htmlspecialchars(detailPaymentStatusText((string)$order['payment_status'])); ?>
-            </span>
-            <span class="badge bg-<?php echo detailBadgeClass((string)($order['split_status'] ?? 'pending')); ?> px-3 py-2">
-                <?php echo htmlspecialchars(detailSplitStatusText((string)($order['split_status'] ?? 'pending'))); ?>
-            </span>
-        </div>
+            <div class="card">
+                <h2>Ordered Items</h2>
 
-        <div class="row g-3 align-items-start mb-4">
-            <div class="col-md-4">
-                <div class="summary-box">
-                    <span class="summary-label">Total Paid</span>
-                    <span class="summary-value">SGD <?php echo number_format((float)$order['total_price'], 2); ?></span>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="summary-box">
-                    <span class="summary-label">Restaurant</span>
-                    <span class="summary-value"><?php echo htmlspecialchars($order['restaurant_name']); ?></span>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="summary-box">
-                    <span class="summary-label">Rider</span>
-                    <span class="summary-value"><?php echo htmlspecialchars($order['rider_name'] ?: 'Pending rider'); ?></span>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Qty</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($orderItems as $item): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($item['item_name']); ?></td>
+                                <td>$<?php echo number_format((float)$item['price'], 2); ?></td>
+                                <td><?php echo (int)$item['quantity']; ?></td>
+                                <td>$<?php echo number_format((float)$item['price'] * (int)$item['quantity'], 2); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+
+                <div class="total-line">
+                    <div><strong>Subtotal:</strong> $<?php echo number_format((float)$order['subtotal'], 2); ?></div>
+                    <div><strong>Delivery Fee:</strong> $<?php echo number_format((float)$order['delivery_fee'], 2); ?></div>
+                    <div><strong>Service Fee:</strong> $<?php echo number_format((float)$order['service_fee'], 2); ?></div>
+                    <div><strong>Total:</strong> $<?php echo number_format((float)$order['total_price'], 2); ?></div>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4 align-items-start">
-            <div class="col-lg-8">
-                <div class="summary-box mb-4">
-                    <h3 class="h5 mb-3">Items Ordered</h3>
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th class="text-center">Qty</th>
-                                    <th class="text-end">Unit Price</th>
-                                    <th class="text-end">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while ($item = $items->fetch_assoc()): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($item['item_name']); ?></td>
-                                        <td class="text-center"><?php echo (int)$item['quantity']; ?></td>
-                                        <td class="text-end">SGD <?php echo number_format((float)$item['price'], 2); ?></td>
-                                        <td class="text-end">SGD <?php echo number_format((float)$item['price'] * (int)$item['quantity'], 2); ?></td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        <div>
+            <div class="card">
+                <h2>Payment Information</h2>
 
-                <div class="summary-box">
-                    <h3 class="h5 mb-3">Delivery & Payment</h3>
-                    <div class="info-list">
-                        <p><strong>Delivery Address:</strong> <?php echo htmlspecialchars($order['delivery_address']); ?></p>
-                        <p><strong>Phone:</strong> <?php echo htmlspecialchars($order['phone']); ?></p>
-                        <p><strong>Notes:</strong> <?php echo htmlspecialchars($order['notes'] !== '' ? $order['notes'] : 'No special instructions.'); ?></p>
-                        <p><strong>Stripe Checkout Session:</strong> <?php echo htmlspecialchars($order['stripe_checkout_session_id'] ?: 'N/A'); ?></p>
-                        <p><strong>Stripe Payment Intent:</strong> <?php echo htmlspecialchars($order['stripe_payment_intent_id'] ?: 'N/A'); ?></p>
-                        <?php if (!empty($order['split_error'])): ?>
-                            <p><strong>Split Error:</strong> <?php echo htmlspecialchars($order['split_error']); ?></p>
-                        <?php endif; ?>
-                    </div>
-                </div>
+                <?php if ($payment): ?>
+                    <div class="info-row"><strong>Method:</strong> <?php echo htmlspecialchars($payment['payment_method']); ?></div>
+                    <div class="info-row"><strong>Amount:</strong> $<?php echo number_format((float)$payment['amount'], 2); ?></div>
+                    <div class="info-row"><strong>Status:</strong> <?php echo htmlspecialchars(formatPaymentStatus($payment['payment_status'])); ?></div>
+                    <div class="info-row"><strong>Transaction Reference:</strong> <?php echo htmlspecialchars($payment['transaction_reference'] ?? 'N/A'); ?></div>
+                    <div class="info-row"><strong>Paid At:</strong> <?php echo !empty($payment['paid_at']) ? date("d M Y, h:i A", strtotime($payment['paid_at'])) : 'N/A'; ?></div>
+                <?php else: ?>
+                    <p>No payment record found for this order.</p>
+                <?php endif; ?>
             </div>
 
-            <div class="col-lg-4">
-                <div class="summary-box mb-4">
-                    <h3 class="h5 mb-3">Price Summary</h3>
-                    <p class="d-flex justify-content-between"><span>Subtotal</span><strong>SGD <?php echo number_format((float)$order['subtotal'], 2); ?></strong></p>
-                    <p class="d-flex justify-content-between"><span>Delivery Fee</span><strong>SGD <?php echo number_format((float)$order['delivery_fee'], 2); ?></strong></p>
-                    <p class="d-flex justify-content-between"><span>Service Fee</span><strong>SGD <?php echo number_format((float)$order['service_fee'], 2); ?></strong></p>
-                    <hr>
-                    <p class="d-flex justify-content-between mb-0"><span>Total</span><strong>SGD <?php echo number_format((float)$order['total_price'], 2); ?></strong></p>
-                </div>
+            <div class="card">
+                <h2>Status History</h2>
 
-                <div class="summary-box mb-4">
-                    <h3 class="h5 mb-3">Payout Split</h3>
-                    <p class="d-flex justify-content-between"><span>Restaurant</span><strong>SGD <?php echo number_format((float)$order['merchant_amount'], 2); ?></strong></p>
-                    <p class="d-flex justify-content-between"><span>Rider</span><strong>SGD <?php echo number_format((float)$order['rider_amount'], 2); ?></strong></p>
-                    <p class="d-flex justify-content-between mb-0"><span>Platform</span><strong>SGD <?php echo number_format((float)$order['platform_fee'], 2); ?></strong></p>
-                </div>
-
-                <div class="summary-box">
-                    <h3 class="h5 mb-3">Transfer Records</h3>
-                    <?php if ($transfers->num_rows > 0): ?>
-                        <?php while ($transfer = $transfers->fetch_assoc()): ?>
-                            <div class="mb-3 pb-3 border-bottom">
-                                <p class="mb-1"><strong><?php echo htmlspecialchars(detailLabel((string)$transfer['recipient_type'])); ?></strong></p>
-                                <p class="mb-1">Amount: SGD <?php echo number_format((float)$transfer['amount'], 2); ?></p>
-                                <p class="mb-1">Status: <?php echo htmlspecialchars(detailLabel((string)$transfer['status'])); ?></p>
-                                <p class="mb-0">Transfer ID: <?php echo htmlspecialchars($transfer['stripe_transfer_id'] ?: 'N/A'); ?></p>
+                <?php if (!empty($statusHistory)): ?>
+                    <?php foreach ($statusHistory as $history): ?>
+                        <div class="history-item">
+                            <div><strong><?php echo htmlspecialchars(formatOrderStatus($history['status'])); ?></strong></div>
+                            <div><?php echo htmlspecialchars($history['notes'] ?? ''); ?></div>
+                            <div style="color:#666; font-size:14px; margin-top:6px;">
+                                Updated by: <?php echo htmlspecialchars($history['updated_by'] ?? 'system'); ?> |
+                                <?php echo date("d M Y, h:i A", strtotime($history['created_at'])); ?>
                             </div>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <p class="mb-0 text-muted">No transfer records have been created for this order yet.</p>
-                    <?php endif; ?>
-                </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p>No status history available.</p>
+                <?php endif; ?>
             </div>
         </div>
     </div>
